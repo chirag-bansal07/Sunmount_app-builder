@@ -150,13 +150,41 @@ export default function CustomersSuppliers() {
 
   const handleSave = (data: Partial<Customer> | Partial<Supplier>) => {
     if (activeTab === "customers") {
-      const newCustomer = data as Customer;
-      setCustomers((prev) => [...prev, newCustomer]);
+      const customerData = data as Customer;
+      if (editingContact) {
+        // Update existing customer
+        setCustomers((prev) =>
+          prev.map((customer) =>
+            customer.id === editingContact.id ? customerData : customer,
+          ),
+        );
+      } else {
+        // Add new customer
+        setCustomers((prev) => [...prev, customerData]);
+      }
     } else {
-      const newSupplier = data as Supplier;
-      setSuppliers((prev) => [...prev, newSupplier]);
+      const supplierData = data as Supplier;
+      if (editingContact) {
+        // Update existing supplier
+        setSuppliers((prev) =>
+          prev.map((supplier) =>
+            supplier.id === editingContact.id ? supplierData : supplier,
+          ),
+        );
+      } else {
+        // Add new supplier
+        setSuppliers((prev) => [...prev, supplierData]);
+      }
     }
     setShowForm(false);
+    setEditingContact(null);
+  };
+
+  const handleEdit = (contact: Customer | Supplier) => {
+    setEditingContact(contact);
+    setActiveTab(contact.type === "customer" ? "customers" : "suppliers");
+    setShowForm(true);
+    setSelectedContact(null);
   };
 
   return (
