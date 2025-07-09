@@ -382,16 +382,7 @@ export default function CurrentOrders() {
 
               {/* Actions */}
               <div className="flex gap-2 pt-4">
-                {selectedOrder.status === "current" && (
-                  <Button
-                    className="flex-1"
-                    onClick={() => moveToNextStep(selectedOrder.id)}
-                  >
-                    Move to Production
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                )}
-                {selectedOrder.status === "in_progress" && (
+                {selectedOrder.status === "packing" && (
                   <Button
                     className="flex-1"
                     onClick={() => moveToNextStep(selectedOrder.id)}
