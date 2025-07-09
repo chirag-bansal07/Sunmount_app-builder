@@ -94,17 +94,28 @@ export default function NewOrder() {
     // Add your submit logic here
   };
 
-  return (
-    <div className="max-w-4xl mx-auto p-6 bg-white">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900 mb-6">New Order</h1>
+    return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto p-6 bg-white shadow-sm">
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-6">New Order</h1>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="grid w-full max-w-md grid-cols-2">
-            <TabsTrigger value="sales">Sales</TabsTrigger>
-            <TabsTrigger value="purchase">Purchase</TabsTrigger>
-          </TabsList>
-        </Tabs>
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+            <TabsList className="grid w-full max-w-md grid-cols-2 bg-gray-100">
+              <TabsTrigger
+                value="sales"
+                className="data-[state=active]:bg-white data-[state=active]:text-gray-900"
+              >
+                Sales
+              </TabsTrigger>
+              <TabsTrigger
+                value="purchase"
+                className="data-[state=active]:bg-white data-[state=active]:text-gray-900"
+              >
+                Purchase
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
 
         <div className="space-y-8">
           {/* Order Details Section */}
