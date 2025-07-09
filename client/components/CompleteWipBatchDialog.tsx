@@ -372,19 +372,31 @@ export function CompleteWipBatchDialog({
           </div>
         </div>
 
-        <div className="flex justify-end space-x-2">
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
           <Button
-            type="button"
+            onClick={addActualOutput}
             variant="outline"
-            onClick={() => {
-              onOpenChange(false);
-            }}
+            className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
           >
-            Cancel
+            <Plus className="h-4 w-4" />
+            Add Output Product
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Completing..." : "Complete Batch"}
-          </Button>
+
+          <div className="flex gap-2 sm:ml-auto">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                onOpenChange(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={loading}>
+              {loading ? "Completing..." : "Complete Batch"}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
