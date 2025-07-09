@@ -137,9 +137,7 @@ export default function CurrentOrders() {
     setOrders((prev) =>
       prev.map((order) => {
         if (order.id === orderId) {
-          if (order.status === "current") {
-            return { ...order, status: "in_progress" };
-          } else if (order.status === "in_progress") {
+          if (order.status === "packing") {
             return { ...order, status: "completed" };
           }
         }
