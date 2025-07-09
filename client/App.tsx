@@ -113,9 +113,11 @@ const App = () => (
           <Route
             path="/customers-suppliers"
             element={
-              <InventoryLayout>
-                <CustomersSuppliers />
-              </InventoryLayout>
+              <ProtectedRoute>
+                <InventoryLayout>
+                  <CustomersSuppliers />
+                </InventoryLayout>
+              </ProtectedRoute>
             }
           />
 
