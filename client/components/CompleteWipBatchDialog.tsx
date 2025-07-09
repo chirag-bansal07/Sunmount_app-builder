@@ -239,6 +239,139 @@ export function CompleteWipBatchDialog({
           </Card>
         )}
 
+        {/* Actual Outputs Input */}
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900">
+            Actual Outputs (Required)
+          </h3>
+
+          <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-full">
+                <thead className="bg-gray-50 border-b border-gray-200">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                      Product Code
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                      Description
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                      Weight/Unit
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                      Quantity
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Action
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {actualOutputs.map((output, index) => (
+                    <tr
+                      key={output.id}
+                      className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    >
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <Input
+                          value={output.productCode}
+                          onChange={(e) =>
+                            updateActualOutput(
+                              output.id,
+                              "productCode",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            fetchOutputDetails(e.target.value, output.id)
+                          }
+                          className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                          placeholder="Enter code"
+                        />
+                      </td>
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <Input
+                          value={output.productName}
+                          onChange={(e) =>
+                            updateActualOutput(
+                              output.id,
+                              "productName",
+                              e.target.value,
+                            )
+                          }
+                          onBlur={(e) =>
+                            fetchOutputDetails(e.target.value, output.id)
+                          }
+                          className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                          placeholder="Enter name"
+                        />
+                      </td>
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <Input
+                          value={output.description}
+                          onChange={(e) =>
+                            updateActualOutput(
+                              output.id,
+                              "description",
+                              e.target.value,
+                            )
+                          }
+                          className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                          placeholder="Enter description"
+                        />
+                      </td>
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <Input
+                          value={output.unit}
+                          onChange={(e) =>
+                            updateActualOutput(
+                              output.id,
+                              "unit",
+                              e.target.value,
+                            )
+                          }
+                          className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                          placeholder="Enter unit"
+                        />
+                      </td>
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <Input
+                          type="number"
+                          value={output.quantity}
+                          onChange={(e) =>
+                            updateActualOutput(
+                              output.id,
+                              "quantity",
+                              parseFloat(e.target.value) || 0,
+                            )
+                          }
+                          className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                          placeholder="Enter quantity"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeActualOutput(output.id)}
+                          className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1"
+                          disabled={actualOutputs.length === 1}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
         <div className="flex justify-end space-x-2">
           <Button
             type="button"
