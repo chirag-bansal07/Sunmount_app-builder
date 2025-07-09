@@ -13,12 +13,7 @@ export interface DemoResponse {
 
 // Inventory Management Types
 
-export type OrderStatus =
-  | "quotation"
-  | "current"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
+export type OrderStatus = "quotation" | "packing" | "completed" | "cancelled";
 export type QuotationType = "sales" | "purchase";
 
 export interface RawMaterial {
