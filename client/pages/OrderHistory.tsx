@@ -151,6 +151,19 @@ export default function OrderHistory() {
   const [customerFilter, setCustomerFilter] = useState<string>("");
   const [supplierFilter, setSupplierFilter] = useState<string>("");
 
+  // Handle URL parameters for filtering
+  useEffect(() => {
+    const customer = searchParams.get("customer");
+    const supplier = searchParams.get("supplier");
+
+    if (customer) {
+      setCustomerFilter(customer);
+    }
+    if (supplier) {
+      setSupplierFilter(supplier);
+    }
+  }, [searchParams]);
+
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
