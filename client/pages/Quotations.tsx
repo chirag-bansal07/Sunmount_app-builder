@@ -98,7 +98,6 @@ const mockQuotations: Quotation[] = [
 export default function Quotations() {
   const [quotations, setQuotations] = useState(mockQuotations);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [selectedQuotation, setSelectedQuotation] = useState<Quotation | null>(
     null,
