@@ -169,12 +169,6 @@ export function CreateWipBatchDialog({
             ),
           );
         }
-      } else {
-        console.error(
-          "Failed to fetch inventory:",
-          response.status,
-          response.statusText,
-        );
       }
     } catch (error) {
       console.error("Error fetching material details:", error);
