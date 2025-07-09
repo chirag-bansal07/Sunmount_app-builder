@@ -88,6 +88,14 @@ const App = () => (
               </InventoryLayout>
             }
           />
+          <Route
+            path="/customers-suppliers"
+            element={
+              <InventoryLayout>
+                <CustomersSuppliers />
+              </InventoryLayout>
+            }
+          />
 
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
