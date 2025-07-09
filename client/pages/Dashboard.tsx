@@ -127,7 +127,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalProducts}</div>
             <p className="text-xs text-muted-foreground">
-              {stats.rawMaterials} raw materials
+              Total items in inventory
             </p>
           </CardContent>
         </Card>
