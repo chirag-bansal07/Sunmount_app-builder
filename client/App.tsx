@@ -48,6 +48,14 @@ const App = () => (
             }
           />
           <Route
+            path="/quotations/new"
+            element={
+              <InventoryLayout>
+                <NewQuotation />
+              </InventoryLayout>
+            }
+          />
+          <Route
             path="/current-orders"
             element={
               <InventoryLayout>
