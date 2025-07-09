@@ -243,8 +243,23 @@ export function CreateWipBatchDialog({
       }
       const products = await productsResponse.json();
 
+      // Filter and validate materials
+      const validMaterials = materials.filter(
+        (material) =>
+          (material.productCode || material.productName) &&
+          material.quantity > 0,
+      );
+
+      if (validMaterials.length === 0) {
+        alert(
+          "Please add at least one material with product code/name and quantity",
+        );
+        setLoading(false);
+        return;
+      }
+
       // Map materials to the correct format with productId
-      const mappedMaterials = materials.map((material) => {
+      const mappedMaterials = validMaterials.map((material) => {
         const foundProduct = products.find(
           (p: any) =>
             p.product_code === material.productCode ||
@@ -253,7 +268,7 @@ export function CreateWipBatchDialog({
 
         if (!foundProduct) {
           throw new Error(
-            `Product not found: ${material.productCode || material.productName}`,
+            `Product not found in inventory: ${material.productCode || material.productName}. Please check the product code/name.`,
           );
         }
 
