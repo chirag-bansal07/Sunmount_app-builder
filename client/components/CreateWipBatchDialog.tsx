@@ -149,7 +149,7 @@ export function CreateWipBatchDialog({
 
         const foundProduct = products.find(
           (p: any) =>
-            p.product_code.toLowerCase() === productCode.toLowerCase() ||
+            p.code.toLowerCase() === productCode.toLowerCase() ||
             p.name.toLowerCase() === productCode.toLowerCase(),
         );
 
@@ -160,8 +160,8 @@ export function CreateWipBatchDialog({
               material.id === materialId
                 ? {
                     ...material,
-                    productId: foundProduct.product_code,
-                    productCode: foundProduct.product_code,
+                    productId: foundProduct.code,
+                    productCode: foundProduct.code,
                     productName: foundProduct.name,
                     description: foundProduct.description || "",
                     unit: foundProduct.weight?.toString() || "units",
