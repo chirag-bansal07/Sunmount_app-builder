@@ -63,6 +63,14 @@ const App = () => (
             }
           />
           <Route
+            path="/work-in-progress/new"
+            element={
+              <InventoryLayout>
+                <WipForm />
+              </InventoryLayout>
+            }
+          />
+          <Route
             path="/order-history"
             element={
               <InventoryLayout>
