@@ -29,7 +29,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
+          <Route path="/" element={<Login />} />
           <Route path="/new-order" element={<NewOrder />} />
 
           {/* Inventory Management Routes */}
