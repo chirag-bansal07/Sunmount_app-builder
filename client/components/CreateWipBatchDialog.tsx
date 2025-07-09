@@ -218,7 +218,7 @@ export function CreateWipBatchDialog({
               output.id === outputId
                 ? {
                     ...output,
-                    productCode: foundProduct.product_code,
+                    productCode: foundProduct.code,
                     productName: foundProduct.name,
                     description: foundProduct.description || "",
                     unit: foundProduct.weight?.toString() || "units",
