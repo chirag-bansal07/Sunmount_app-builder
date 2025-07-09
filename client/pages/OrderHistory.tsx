@@ -150,8 +150,6 @@ export default function OrderHistory() {
     const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || order.status === statusFilter;
 
     // Date filtering
     let matchesDate = true;
@@ -178,7 +176,7 @@ export default function OrderHistory() {
       }
     }
 
-    return matchesSearch && matchesStatus && matchesDate;
+    return matchesSearch && matchesDate;
   });
 
   const getStatusColor = (status: string) => {
