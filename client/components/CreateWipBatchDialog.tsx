@@ -165,6 +165,44 @@ export function CreateWipBatchDialog({
     );
   };
 
+  const fetchExpectedOutputDetails = async (
+    productCode: string,
+    outputId: string,
+  ) => {
+    if (!productCode.trim()) return;
+
+    try {
+      const response = await fetch(`/api/inventory`);
+      if (response.ok) {
+        const products = await response.json();
+        const foundProduct = products.find(
+          (p: any) =>
+            p.product_code.toLowerCase() === productCode.toLowerCase() ||
+            p.name.toLowerCase() === productCode.toLowerCase(),
+        );
+
+        if (foundProduct) {
+          setExpectedOutputs((prevOutputs) =>
+            prevOutputs.map((output) =>
+              output.id === outputId
+                ? {
+                    ...output,
+                    productCode: foundProduct.product_code,
+                    productName: foundProduct.name,
+                    description: foundProduct.description || "",
+                    unit: foundProduct.weight?.toString() || "units",
+                    price: foundProduct.price || 0,
+                  }
+                : output,
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching output details:", error);
+    }
+  };
+
   const removeMaterial = (id: string) => {
     setMaterials(materials.filter((m) => m.id !== id));
   };
