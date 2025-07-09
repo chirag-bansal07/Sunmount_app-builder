@@ -142,20 +142,43 @@ export function CompleteWipBatchDialog({
         return;
       }
 
+      // Get all products to map product codes to IDs
+      const productsResponse = await fetch(`/api/inventory`);
+      if (!productsResponse.ok) {
+        alert("Failed to fetch products for validation");
+        setLoading(false);
+        return;
+      }
+      const products = await productsResponse.json();
+
+      // Map outputs to the correct format with productId
+      const mappedOutputs = validOutputs.map((output) => {
+        const foundProduct = products.find(
+          (p: any) =>
+            p.product_code === output.productCode ||
+            p.name === output.productName,
+        );
+
+        if (!foundProduct) {
+          throw new Error(
+            `Product not found: ${output.productCode || output.productName}`,
+          );
+        }
+
+        return {
+          productId: foundProduct.product_code, // Using product_code as ID
+          quantity: output.quantity,
+        };
+      });
+
       // Mark the batch as completed with outputs
-      const updateResponse = await fetch(`/api/wip/${batch.batchNumber}`, {
+      const updateResponse = await fetch(`/api/wip/${batch.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          status: "completed",
-          end_date: new Date().toISOString(),
-          outputs: validOutputs.map((output) => ({
-            product_code:
-              output.productCode || output.productName.toUpperCase(),
-            quantity: output.quantity,
-          })),
+          outputs: mappedOutputs,
         }),
       });
 
