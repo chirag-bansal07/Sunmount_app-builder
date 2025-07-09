@@ -7,6 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Plus, X } from "lucide-react";
 
 interface Product {
   id: string;
@@ -29,6 +31,15 @@ interface WipBatch {
   status: string;
 }
 
+interface ActualOutput {
+  id: string;
+  productCode: string;
+  productName: string;
+  description: string;
+  unit: string;
+  quantity: number;
+}
+
 interface CompleteWipBatchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,12 +54,95 @@ export function CompleteWipBatchDialog({
   onSuccess,
 }: CompleteWipBatchDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [actualOutputs, setActualOutputs] = useState<ActualOutput[]>([
+    {
+      id: Date.now().toString(),
+      productCode: "",
+      productName: "",
+      description: "",
+      unit: "",
+      quantity: 0,
+    },
+  ]);
+
+  const addActualOutput = () => {
+    const newOutput: ActualOutput = {
+      id: Date.now().toString(),
+      productCode: "",
+      productName: "",
+      description: "",
+      unit: "",
+      quantity: 0,
+    };
+    setActualOutputs([...actualOutputs, newOutput]);
+  };
+
+  const updateActualOutput = (
+    id: string,
+    field: keyof ActualOutput,
+    value: string | number,
+  ) => {
+    setActualOutputs(
+      actualOutputs.map((output) =>
+        output.id === id ? { ...output, [field]: value } : output,
+      ),
+    );
+  };
+
+  const removeActualOutput = (id: string) => {
+    setActualOutputs(actualOutputs.filter((output) => output.id !== id));
+  };
+
+  const fetchOutputDetails = async (productCode: string, outputId: string) => {
+    if (!productCode.trim()) return;
+
+    try {
+      const response = await fetch(`/api/inventory`);
+      if (response.ok) {
+        const products = await response.json();
+        const foundProduct = products.find(
+          (p: any) =>
+            p.product_code.toLowerCase() === productCode.toLowerCase() ||
+            p.name.toLowerCase() === productCode.toLowerCase(),
+        );
+
+        if (foundProduct) {
+          setActualOutputs((prevOutputs) =>
+            prevOutputs.map((output) =>
+              output.id === outputId
+                ? {
+                    ...output,
+                    productCode: foundProduct.product_code,
+                    productName: foundProduct.name,
+                    description: foundProduct.description || "",
+                    unit: foundProduct.weight?.toString() || "units",
+                  }
+                : output,
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching output details:", error);
+    }
+  };
 
   const handleSubmit = async () => {
     setLoading(true);
 
     try {
-      // Mark the batch as completed
+      // Validate outputs
+      const validOutputs = actualOutputs.filter(
+        (output) => output.productName && output.quantity > 0,
+      );
+
+      if (validOutputs.length === 0) {
+        alert("Please add at least one output product with quantity");
+        setLoading(false);
+        return;
+      }
+
+      // Mark the batch as completed with outputs
       const updateResponse = await fetch(`/api/wip/${batch.batchNumber}`, {
         method: "PUT",
         headers: {
@@ -57,12 +151,27 @@ export function CompleteWipBatchDialog({
         body: JSON.stringify({
           status: "completed",
           end_date: new Date().toISOString(),
+          outputs: validOutputs.map((output) => ({
+            product_code:
+              output.productCode || output.productName.toUpperCase(),
+            quantity: output.quantity,
+          })),
         }),
       });
 
       if (updateResponse.ok) {
         onSuccess();
         onOpenChange(false);
+        setActualOutputs([
+          {
+            id: Date.now().toString(),
+            productCode: "",
+            productName: "",
+            description: "",
+            unit: "",
+            quantity: 0,
+          },
+        ]);
       } else {
         const error = await updateResponse.json();
         console.error("Failed to complete WIP batch:", error);
