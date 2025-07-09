@@ -208,8 +208,14 @@ export default function NewQuotation() {
       if (response.ok) {
         navigate("/quotations");
       } else {
-        const error = await response.json();
-        alert(`Failed to create quotation: ${error.error}`);
+        let errorMessage = "Failed to create quotation";
+        try {
+          const error = await response.json();
+          errorMessage = error.error || error.message || errorMessage;
+        } catch (parseError) {
+          errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        }
+        alert(errorMessage);
       }
     } catch (error) {
       console.error("Error creating quotation:", error);
