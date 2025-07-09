@@ -495,12 +495,16 @@ export default function CustomersSuppliers() {
         </div>
       )}
 
-      {/* Add Form Modal */}
+      {/* Add/Edit Form Modal */}
       {showForm && (
         <CustomerSupplierForm
           type={activeTab === "customers" ? "customer" : "supplier"}
-          onClose={() => setShowForm(false)}
+          onClose={() => {
+            setShowForm(false);
+            setEditingContact(null);
+          }}
           onSave={handleSave}
+          initialData={editingContact || undefined}
         />
       )}
     </div>
