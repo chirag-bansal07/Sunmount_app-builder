@@ -75,9 +75,6 @@ export default function Dashboard() {
           wipBatches: wipData.filter(
             (batch: WipBatch) => batch.status === "IN_PROGRESS",
           ).length,
-          rawMaterials: inventoryData.products.filter(
-            (product: Product) => product.isRawMaterial,
-          ).length,
         });
 
         setRecentWipBatches(wipData.slice(0, 3));
