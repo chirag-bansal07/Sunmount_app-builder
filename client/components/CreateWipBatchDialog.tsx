@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { ProductLookup } from "@/components/ProductLookup";
 
 interface Product {
@@ -23,11 +23,24 @@ interface Product {
 }
 
 interface Material {
+  id: string;
   productId: string;
   productCode: string;
   productName: string;
+  description: string;
   unit: string;
+  price: number;
   availableQuantity: number;
+  quantity: number;
+}
+
+interface ExpectedOutput {
+  id: string;
+  productCode: string;
+  productName: string;
+  description: string;
+  unit: string;
+  price: number;
   quantity: number;
 }
 
@@ -45,6 +58,7 @@ export function CreateWipBatchDialog({
   const [batchNumber, setBatchNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [expectedOutputs, setExpectedOutputs] = useState<ExpectedOutput[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -53,37 +67,71 @@ export function CreateWipBatchDialog({
       const now = new Date();
       const batchNum = `WIP-${now.getFullYear()}${(now.getMonth() + 1).toString().padStart(2, "0")}${now.getDate().toString().padStart(2, "0")}-${now.getHours().toString().padStart(2, "0")}${now.getMinutes().toString().padStart(2, "0")}`;
       setBatchNumber(batchNum);
+
+      // Initialize with one empty row for each section
+      if (materials.length === 0) {
+        addMaterial();
+      }
+      if (expectedOutputs.length === 0) {
+        addExpectedOutput();
+      }
     }
   }, [open]);
 
-  const addMaterial = (product: Product) => {
-    const existingMaterial = materials.find((m) => m.productId === product.id);
-    if (existingMaterial) {
-      return; // Product already added
-    }
-
+  const addMaterial = () => {
     const newMaterial: Material = {
-      productId: product.id,
-      productCode: product.code,
-      productName: product.name,
-      unit: product.unit,
-      availableQuantity: product.quantity,
+      id: Date.now().toString(),
+      productId: "",
+      productCode: "",
+      productName: "",
+      description: "",
+      unit: "",
+      price: 0,
+      availableQuantity: 0,
       quantity: 0,
     };
-
     setMaterials([...materials, newMaterial]);
   };
 
-  const updateMaterialQuantity = (productId: string, quantity: number) => {
+  const addExpectedOutput = () => {
+    const newOutput: ExpectedOutput = {
+      id: Date.now().toString(),
+      productCode: "",
+      productName: "",
+      description: "",
+      unit: "",
+      price: 0,
+      quantity: 0,
+    };
+    setExpectedOutputs([...expectedOutputs, newOutput]);
+  };
+
+  const updateMaterial = (
+    id: string,
+    field: keyof Material,
+    value: string | number,
+  ) => {
     setMaterials(
-      materials.map((m) =>
-        m.productId === productId ? { ...m, quantity } : m,
-      ),
+      materials.map((m) => (m.id === id ? { ...m, [field]: value } : m)),
     );
   };
 
-  const removeMaterial = (productId: string) => {
-    setMaterials(materials.filter((m) => m.productId !== productId));
+  const updateExpectedOutput = (
+    id: string,
+    field: keyof ExpectedOutput,
+    value: string | number,
+  ) => {
+    setExpectedOutputs(
+      expectedOutputs.map((o) => (o.id === id ? { ...o, [field]: value } : o)),
+    );
+  };
+
+  const removeMaterial = (id: string) => {
+    setMaterials(materials.filter((m) => m.id !== id));
+  };
+
+  const removeExpectedOutput = (id: string) => {
+    setExpectedOutputs(expectedOutputs.filter((o) => o.id !== id));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -130,7 +178,7 @@ export function CreateWipBatchDialog({
   const isValid =
     batchNumber &&
     materials.length > 0 &&
-    materials.every((m) => m.quantity > 0);
+    materials.every((m) => m.productName && m.quantity > 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -161,84 +209,298 @@ export function CreateWipBatchDialog({
             />
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Raw Materials</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <ProductLookup
-                onProductSelect={addMaterial}
-                placeholder="Add raw material by product code..."
-                filterRawMaterials={true}
-              />
+          {/* Raw Materials Section */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Raw Materials
+            </h3>
 
-              {materials.length > 0 && (
-                <div className="space-y-2">
-                  {materials.map((material) => (
-                    <div
-                      key={material.productId}
-                      className="flex items-center space-x-2 p-3 border rounded-md"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium">
-                          {material.productName}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          Code: {material.productCode} | Available:{" "}
-                          {material.availableQuantity} {material.unit}
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Input
-                          type="number"
-                          min="0"
-                          max={material.availableQuantity}
-                          step="0.01"
-                          value={material.quantity}
-                          onChange={(e) =>
-                            updateMaterialQuantity(
-                              material.productId,
-                              parseFloat(e.target.value) || 0,
-                            )
-                          }
-                          className="w-24"
-                          placeholder="Qty"
-                        />
-                        <span className="text-sm text-muted-foreground">
-                          {material.unit}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeMaterial(material.productId)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Product Code
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Name
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Description
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Weight/Unit
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Quantity
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {materials.map((material, index) => (
+                      <tr
+                        key={material.id}
+                        className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      >
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            value={material.productCode}
+                            onChange={(e) =>
+                              updateMaterial(
+                                material.id,
+                                "productCode",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter code"
+                          />
+                        </td>
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            value={material.productName}
+                            onChange={(e) =>
+                              updateMaterial(
+                                material.id,
+                                "productName",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter name"
+                          />
+                        </td>
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            value={material.description}
+                            onChange={(e) =>
+                              updateMaterial(
+                                material.id,
+                                "description",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter description"
+                          />
+                        </td>
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            value={material.unit}
+                            onChange={(e) =>
+                              updateMaterial(
+                                material.id,
+                                "unit",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter unit"
+                          />
+                        </td>
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            type="number"
+                            value={material.quantity}
+                            onChange={(e) =>
+                              updateMaterial(
+                                material.id,
+                                "quantity",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter quantity"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeMaterial(material.id)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1"
+                            disabled={materials.length === 1}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
 
-          <div className="flex justify-end space-x-2">
+          {/* Expected Output Section */}
+          <div className="space-y-6">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Expected Output
+            </h3>
+
+            <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Product Code
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Name
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Description
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Weight/Unit
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
+                        Quantity
+                      </th>
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Action
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {expectedOutputs.map((output, index) => (
+                      <tr
+                        key={output.id}
+                        className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      >
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            value={output.productCode}
+                            onChange={(e) =>
+                              updateExpectedOutput(
+                                output.id,
+                                "productCode",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter code"
+                          />
+                        </td>
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            value={output.productName}
+                            onChange={(e) =>
+                              updateExpectedOutput(
+                                output.id,
+                                "productName",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter name"
+                          />
+                        </td>
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            value={output.description}
+                            onChange={(e) =>
+                              updateExpectedOutput(
+                                output.id,
+                                "description",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter description"
+                          />
+                        </td>
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            value={output.unit}
+                            onChange={(e) =>
+                              updateExpectedOutput(
+                                output.id,
+                                "unit",
+                                e.target.value,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter unit"
+                          />
+                        </td>
+                        <td className="px-4 py-3 border-r border-gray-200">
+                          <Input
+                            type="number"
+                            value={output.quantity}
+                            onChange={(e) =>
+                              updateExpectedOutput(
+                                output.id,
+                                "quantity",
+                                parseFloat(e.target.value) || 0,
+                              )
+                            }
+                            className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
+                            placeholder="Enter quantity"
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeExpectedOutput(output.id)}
+                            className="text-red-600 hover:text-red-800 hover:bg-red-50 p-1"
+                            disabled={expectedOutputs.length === 1}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
             <Button
-              type="button"
+              onClick={addMaterial}
               variant="outline"
-              onClick={() => {
-                onOpenChange(false);
-                setBatchNumber("");
-                setNotes("");
-                setMaterials([]);
-              }}
+              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
             >
-              Cancel
+              <Plus className="h-4 w-4" />
+              Add Raw Material
             </Button>
-            <Button type="submit" disabled={loading || !isValid}>
-              {loading ? "Creating..." : "Create Batch"}
+
+            <Button
+              onClick={addExpectedOutput}
+              variant="outline"
+              className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              <Plus className="h-4 w-4" />
+              Add Expected Output
             </Button>
+
+            <div className="flex gap-2 sm:ml-auto">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  onOpenChange(false);
+                  setBatchNumber("");
+                  setNotes("");
+                  setMaterials([]);
+                  setExpectedOutputs([]);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={loading || !isValid}>
+                {loading ? "Creating..." : "Create Batch"}
+              </Button>
+            </div>
           </div>
         </form>
       </DialogContent>
