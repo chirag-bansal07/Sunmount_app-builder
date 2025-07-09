@@ -168,8 +168,6 @@ export function CreateWipBatchDialog({
                 : material,
             ),
           );
-        } else {
-          console.log("Product not found for code:", productCode);
         }
       } else {
         console.error(
