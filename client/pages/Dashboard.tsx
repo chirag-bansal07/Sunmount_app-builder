@@ -44,7 +44,6 @@ export default function Dashboard() {
     totalInventoryValue: 0,
     lowStockItems: 0,
     wipBatches: 0,
-    rawMaterials: 0,
   });
   const [recentWipBatches, setRecentWipBatches] = useState<WipBatch[]>([]);
   const [lowStockProducts, setLowStockProducts] = useState<Product[]>([]);
