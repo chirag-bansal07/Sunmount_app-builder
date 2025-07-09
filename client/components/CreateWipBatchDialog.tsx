@@ -216,21 +216,44 @@ export function CreateWipBatchDialog({
     setLoading(true);
 
     try {
+      // Get all products to map product codes to IDs
+      const productsResponse = await fetch(`/api/inventory`);
+      if (!productsResponse.ok) {
+        alert("Failed to fetch products for validation");
+        setLoading(false);
+        return;
+      }
+      const products = await productsResponse.json();
+
+      // Map materials to the correct format with productId
+      const mappedMaterials = materials.map((material) => {
+        const foundProduct = products.find(
+          (p: any) =>
+            p.product_code === material.productCode ||
+            p.name === material.productName,
+        );
+
+        if (!foundProduct) {
+          throw new Error(
+            `Product not found: ${material.productCode || material.productName}`,
+          );
+        }
+
+        return {
+          productId: foundProduct.product_code, // Using product_code as ID
+          quantity: material.quantity,
+        };
+      });
+
       const response = await fetch("/api/wip", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          batch_number: batchNumber,
-          raw_materials: materials.map((m) => ({
-            product_code: m.productCode,
-            quantity: m.quantity,
-          })),
-          output: [], // Will be filled when batch is completed
-          product_code: materials[0]?.productCode || "WIP", // Use first material's code or default
-          status: "in_progress",
-          start_date: new Date().toISOString(),
+          batchNumber: batchNumber,
+          notes: notes,
+          materials: mappedMaterials,
         }),
       });
 
