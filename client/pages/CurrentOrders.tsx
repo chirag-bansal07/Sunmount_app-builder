@@ -50,7 +50,7 @@ const mockOrders: Order[] = [
       },
     ],
     totalAmount: 2200,
-    status: "current",
+    status: "packing",
     createdAt: "2024-01-16T08:30:00Z",
     updatedAt: "2024-01-16T08:30:00Z",
     expectedDelivery: "2024-01-30T00:00:00Z",
