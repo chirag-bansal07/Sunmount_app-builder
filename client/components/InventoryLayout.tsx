@@ -145,6 +145,18 @@ export default function InventoryLayout({ children }: InventoryLayoutProps) {
               </Button>
             </Link>
           </div>
+
+          {/* Logout Section */}
+          <div className="p-4 border-t">
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
 
