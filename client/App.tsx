@@ -53,9 +53,11 @@ const App = () => (
           <Route
             path="/quotations"
             element={
-              <InventoryLayout>
-                <Quotations />
-              </InventoryLayout>
+              <ProtectedRoute>
+                <InventoryLayout>
+                  <Quotations />
+                </InventoryLayout>
+              </ProtectedRoute>
             }
           />
           <Route
