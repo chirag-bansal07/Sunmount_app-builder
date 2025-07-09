@@ -47,6 +47,11 @@ const sidebarItems: SidebarItem[] = [
     href: "/order-history",
     icon: History,
   },
+  {
+    title: "Customers & Suppliers",
+    href: "/customers-suppliers",
+    icon: Users,
+  },
 ];
 
 interface InventoryLayoutProps {
