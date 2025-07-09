@@ -93,9 +93,11 @@ const App = () => (
           <Route
             path="/work-in-progress/new"
             element={
-              <InventoryLayout>
-                <WipForm />
-              </InventoryLayout>
+              <ProtectedRoute>
+                <InventoryLayout>
+                  <WipForm />
+                </InventoryLayout>
+              </ProtectedRoute>
             }
           />
           <Route
