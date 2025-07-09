@@ -102,3 +102,36 @@ export interface InventoryItem {
   costPerUnit: number;
   lastUpdated: string;
 }
+
+export interface Customer {
+  id: string;
+  name: string;
+  companyName: string;
+  email: string;
+  phone: string;
+  address: string;
+  type: "customer";
+  totalOrders: number;
+  totalValue: number;
+  lastOrderDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  companyName: string;
+  email: string;
+  phone: string;
+  address: string;
+  type: "supplier";
+  totalPurchases: number;
+  totalValue: number;
+  lastPurchaseDate?: string;
+  createdAt: string;
+  updatedAt: string;
+  rating?: number;
+  notes?: string;
+}
