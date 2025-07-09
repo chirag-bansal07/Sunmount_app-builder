@@ -152,7 +152,6 @@ export function CreateWipBatchDialog({
         );
 
         if (foundProduct) {
-          console.log("Found product:", foundProduct);
           setMaterials((prevMaterials) =>
             prevMaterials.map((material) =>
               material.id === materialId
