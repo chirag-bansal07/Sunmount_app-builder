@@ -143,7 +143,6 @@ const mockHistoryOrders: Order[] = [
 export default function OrderHistory() {
   const [orders, setOrders] = useState(mockHistoryOrders);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
