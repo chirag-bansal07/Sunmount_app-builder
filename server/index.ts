@@ -26,8 +26,8 @@ export function createServer() {
   app.use(express.json());
 
   // API Routes
-  app.get("/api/ping", getDemoHandler);
-  app.get("/api/demo", getDemoHandler);
+  app.get("/api/ping", handleDemo);
+  app.get("/api/demo", handleDemo);
 
   // Inventory routes
   app.get("/api/inventory", getProductsHandler);
