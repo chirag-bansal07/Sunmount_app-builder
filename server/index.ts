@@ -96,7 +96,7 @@ export function createServer() {
 // Start server if running directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   const app = createServer();
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 3002;
 
   app.listen(port, () => {
     console.log(`Server running on http://localhost:${port}`);
