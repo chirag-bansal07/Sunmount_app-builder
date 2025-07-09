@@ -169,6 +169,15 @@ export default function OrderHistory() {
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
 
+    // Customer/Supplier filtering
+    const matchesCustomerFilter = customerFilter
+      ? order.customerName.toLowerCase().includes(customerFilter.toLowerCase())
+      : true;
+
+    const matchesSupplierFilter = supplierFilter
+      ? order.customerName.toLowerCase().includes(supplierFilter.toLowerCase())
+      : true;
+
     // Date filtering
     let matchesDate = true;
     if (dateFilter !== "all") {
@@ -194,7 +203,12 @@ export default function OrderHistory() {
       }
     }
 
-    return matchesSearch && matchesDate;
+    return (
+      matchesSearch &&
+      matchesDate &&
+      matchesCustomerFilter &&
+      matchesSupplierFilter
+    );
   });
 
   const getStatusColor = (status: string) => {
