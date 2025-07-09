@@ -93,12 +93,8 @@ export default function WipForm() {
     }
   };
 
-  const availableRawMaterials = availableProducts.filter(
-    (p) => p.isRawMaterial,
-  );
-  const availableFinishedProducts = availableProducts.filter(
-    (p) => !p.isRawMaterial,
-  );
+  const availableRawMaterials = availableProducts;
+  const availableFinishedProducts = availableProducts;
 
   // Handle form field changes
   const handleFormChange = (field: string, value: string) => {
