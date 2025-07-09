@@ -19,7 +19,6 @@ interface Product {
   name: string;
   quantity: number;
   unit: string;
-  isRawMaterial: boolean;
 }
 
 interface Material {
