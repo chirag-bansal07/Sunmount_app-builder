@@ -62,6 +62,13 @@ export function createServer() {
   app.get("/api/suppliers", getSuppliersHandler);
   app.post("/api/suppliers", createSupplierHandler);
 
+  // Quotation routes
+  app.get("/api/quotations", getQuotationsHandler);
+  app.post("/api/quotations", createQuotationHandler);
+  app.put("/api/quotations/:id", updateQuotationHandler);
+  app.post("/api/quotations/:id/move-to-orders", moveToOrdersHandler);
+  app.delete("/api/quotations/:id", deleteQuotationHandler);
+
   // Serve static files in production
   if (process.env.NODE_ENV === "production") {
     const staticPath = path.join(__dirname, "../spa");
