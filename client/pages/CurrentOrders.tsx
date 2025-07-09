@@ -107,17 +107,15 @@ const mockOrders: Order[] = [
 export default function CurrentOrders() {
   const [orders, setOrders] = useState(mockOrders);
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || order.status === statusFilter;
+    const isPacking = order.status === "packing";
 
-    return matchesSearch && matchesStatus;
+    return matchesSearch && isPacking;
   });
 
   const getStatusColor = (status: string) => {
