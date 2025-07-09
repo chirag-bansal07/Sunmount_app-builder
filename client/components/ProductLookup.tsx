@@ -91,13 +91,8 @@ export function ProductLookup({
             name: searchResults[0].name,
             quantity: searchResults[0].quantity,
             unit: "units",
-            isRawMaterial: true,
           };
-          if (!filterRawMaterials || product.isRawMaterial) {
-            handleProductSelect(product);
-          } else {
-            alert("This product is not a raw material");
-          }
+          handleProductSelect(product);
         } else {
           alert("Product not found");
         }
