@@ -494,7 +494,11 @@ export default function CustomersSuppliers() {
                 >
                   Edit
                 </Button>
-                <Button variant="outline" className="flex-1">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => handleViewOrders(selectedContact)}
+                >
                   View{" "}
                   {selectedContact.type === "customer" ? "Orders" : "Purchases"}
                 </Button>
