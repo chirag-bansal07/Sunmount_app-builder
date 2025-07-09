@@ -70,6 +70,44 @@ export default function NewQuotation() {
     );
   };
 
+  const fetchProductDetails = async (
+    productCode: string,
+    productId: string,
+  ) => {
+    if (!productCode.trim()) return;
+
+    try {
+      const response = await fetch(`/api/inventory`);
+      if (response.ok) {
+        const products = await response.json();
+        const foundProduct = products.find(
+          (p: any) =>
+            p.product_code.toLowerCase() === productCode.toLowerCase() ||
+            p.name.toLowerCase() === productCode.toLowerCase(),
+        );
+
+        if (foundProduct) {
+          setProducts((prevProducts) =>
+            prevProducts.map((product) =>
+              product.id === productId
+                ? {
+                    ...product,
+                    code: foundProduct.product_code,
+                    name: foundProduct.name,
+                    description: foundProduct.description || "",
+                    weight: foundProduct.weight?.toString() || "1",
+                    price: foundProduct.price?.toString() || "0",
+                  }
+                : product,
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching product details:", error);
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
