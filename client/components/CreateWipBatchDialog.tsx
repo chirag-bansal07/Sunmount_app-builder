@@ -263,6 +263,7 @@ export function CreateWipBatchDialog({
         setBatchNumber("");
         setNotes("");
         setMaterials([]);
+        setExpectedOutputs([]);
       } else {
         const error = await response.json();
         console.error("Failed to create WIP batch:", error);
