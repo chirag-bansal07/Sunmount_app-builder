@@ -104,6 +104,7 @@ const mockSuppliers: Supplier[] = [
 ];
 
 export default function CustomersSuppliers() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("customers");
   const [customers, setCustomers] = useState(mockCustomers);
   const [suppliers, setSuppliers] = useState(mockSuppliers);
