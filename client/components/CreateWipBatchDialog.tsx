@@ -140,9 +140,13 @@ export function CreateWipBatchDialog({
     if (!productCode.trim()) return;
 
     try {
+      console.log("Fetching material details for:", productCode);
       const response = await fetch(`/api/inventory`);
+
       if (response.ok) {
         const products = await response.json();
+        console.log("Inventory response:", products);
+
         const foundProduct = products.find(
           (p: any) =>
             p.product_code.toLowerCase() === productCode.toLowerCase() ||
@@ -150,6 +154,7 @@ export function CreateWipBatchDialog({
         );
 
         if (foundProduct) {
+          console.log("Found product:", foundProduct);
           setMaterials((prevMaterials) =>
             prevMaterials.map((material) =>
               material.id === materialId
@@ -166,7 +171,15 @@ export function CreateWipBatchDialog({
                 : material,
             ),
           );
+        } else {
+          console.log("Product not found for code:", productCode);
         }
+      } else {
+        console.error(
+          "Failed to fetch inventory:",
+          response.status,
+          response.statusText,
+        );
       }
     } catch (error) {
       console.error("Error fetching material details:", error);
