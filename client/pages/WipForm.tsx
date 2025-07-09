@@ -81,7 +81,6 @@ export default function WipForm() {
           quantity: product.quantity,
           unitPrice: product.price,
           unit: "units",
-          isRawMaterial: true, // For now, treat all as raw materials
         }));
         setAvailableProducts(transformedData);
       } else {
