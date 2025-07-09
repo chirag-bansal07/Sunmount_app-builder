@@ -208,7 +208,7 @@ export function CreateWipBatchDialog({
         const products = await response.json();
         const foundProduct = products.find(
           (p: any) =>
-            p.product_code.toLowerCase() === productCode.toLowerCase() ||
+            p.code.toLowerCase() === productCode.toLowerCase() ||
             p.name.toLowerCase() === productCode.toLowerCase(),
         );
 
