@@ -83,9 +83,11 @@ const App = () => (
           <Route
             path="/work-in-progress"
             element={
-              <InventoryLayout>
-                <WorkInProgress />
-              </InventoryLayout>
+              <ProtectedRoute>
+                <InventoryLayout>
+                  <WorkInProgress />
+                </InventoryLayout>
+              </ProtectedRoute>
             }
           />
           <Route
