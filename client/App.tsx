@@ -15,6 +15,7 @@ import CurrentOrders from "./pages/CurrentOrders";
 import WorkInProgress from "./pages/WorkInProgress";
 import WipForm from "./pages/WipForm";
 import OrderHistory from "./pages/OrderHistory";
+import CustomersSuppliers from "./pages/CustomersSuppliers";
 import NotFound from "./pages/NotFound";
 import NewOrder from "./pages/NewOrder";
 
