@@ -345,7 +345,7 @@ export default function Quotations() {
                   </>
                 )}
                 {selectedQuotation.type === "purchase" &&
-                  selectedQuotation.status === "current" && (
+                  selectedQuotation.status === "packing" && (
                     <Button className="flex-1">Mark as Received</Button>
                   )}
               </div>
