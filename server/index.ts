@@ -30,6 +30,11 @@ import {
   moveToOrdersHandler,
   deleteQuotationHandler,
 } from "./routes/quotations";
+import {
+  getCurrentOrdersHandler,
+  getOrderHistoryHandler,
+  dispatchOrderHandler,
+} from "./routes/orders";
 
 export function createServer() {
   const app = express();
