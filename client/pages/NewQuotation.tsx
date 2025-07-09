@@ -383,6 +383,7 @@ export default function NewQuotation() {
                   onChange={(e) =>
                     handleInputChange("companyName", e.target.value)
                   }
+                  onBlur={(e) => fetchCustomerDetails(e.target.value)}
                   className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
