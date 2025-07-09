@@ -275,8 +275,7 @@ export function CreateWipBatchDialog({
       const mappedMaterials = validMaterials.map((material) => {
         const foundProduct = products.find(
           (p: any) =>
-            p.product_code === material.productCode ||
-            p.name === material.productName,
+            p.code === material.productCode || p.name === material.productName,
         );
 
         if (!foundProduct) {
