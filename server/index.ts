@@ -49,6 +49,12 @@ export function createServer() {
   app.post("/api/wip", createWipBatchHandler);
   app.put("/api/wip/:id", completeWipBatchHandler);
 
+  // Customer and Supplier routes
+  app.get("/api/customers", getCustomersHandler);
+  app.post("/api/customers", createCustomerHandler);
+  app.get("/api/suppliers", getSuppliersHandler);
+  app.post("/api/suppliers", createSupplierHandler);
+
   // Serve static files in production
   if (process.env.NODE_ENV === "production") {
     const staticPath = path.join(__dirname, "../spa");
