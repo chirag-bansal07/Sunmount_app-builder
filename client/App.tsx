@@ -10,6 +10,7 @@ import InventoryLayout from "./components/InventoryLayout";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
 import Quotations from "./pages/Quotations";
+import NewQuotation from "./pages/NewQuotation";
 import CurrentOrders from "./pages/CurrentOrders";
 import WorkInProgress from "./pages/WorkInProgress";
 import WipForm from "./pages/WipForm";
