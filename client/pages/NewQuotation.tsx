@@ -175,7 +175,7 @@ export default function NewQuotation() {
 
       // First create customer if it doesn't exist
       if (formData.customerName && formData.email) {
-        await fetch("/api/customers", {
+        const customerResponse = await fetch("/api/customers", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -188,6 +188,13 @@ export default function NewQuotation() {
             address: formData.address,
           }),
         });
+
+        // Don't fail if customer creation fails (customer might already exist)
+        if (!customerResponse.ok) {
+          console.warn(
+            "Customer creation failed, but continuing with quotation",
+          );
+        }
       }
 
       const response = await fetch("/api/quotations", {
