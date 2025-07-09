@@ -19,7 +19,6 @@ interface DashboardStats {
   totalInventoryValue: number;
   lowStockItems: number;
   wipBatches: number;
-  rawMaterials: number;
 }
 
 interface WipBatch {
