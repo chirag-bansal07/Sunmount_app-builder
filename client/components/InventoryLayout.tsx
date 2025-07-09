@@ -62,6 +62,13 @@ interface InventoryLayoutProps {
 export default function InventoryLayout({ children }: InventoryLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem("isAdminLoggedIn");
+    localStorage.removeItem("adminId");
+    navigate("/", { replace: true });
+  };
 
   return (
     <div className="flex h-screen bg-gray-100">
