@@ -297,7 +297,7 @@ export function CreateWipBatchDialog({
   const isValid =
     batchNumber &&
     materials.length > 0 &&
-    materials.every((m) => m.productName && m.quantity > 0);
+    materials.some((m) => (m.productCode || m.productName) && m.quantity > 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
