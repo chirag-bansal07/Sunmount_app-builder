@@ -333,6 +333,9 @@ export function CreateWipBatchDialog({
                                 e.target.value,
                               )
                             }
+                            onBlur={(e) =>
+                              fetchMaterialDetails(e.target.value, material.id)
+                            }
                             className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
                             placeholder="Enter code"
                           />
