@@ -68,12 +68,30 @@ export function CreateWipBatchDialog({
       setBatchNumber(batchNum);
 
       // Initialize with one empty row for each section
-      if (materials.length === 0) {
-        addMaterial();
-      }
-      if (expectedOutputs.length === 0) {
-        addExpectedOutput();
-      }
+      setMaterials([
+        {
+          id: Date.now().toString(),
+          productId: "",
+          productCode: "",
+          productName: "",
+          description: "",
+          unit: "",
+          price: 0,
+          availableQuantity: 0,
+          quantity: 0,
+        },
+      ]);
+      setExpectedOutputs([
+        {
+          id: (Date.now() + 1).toString(),
+          productCode: "",
+          productName: "",
+          description: "",
+          unit: "",
+          price: 0,
+          quantity: 0,
+        },
+      ]);
     }
   }, [open]);
 
