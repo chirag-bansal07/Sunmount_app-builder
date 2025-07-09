@@ -88,7 +88,7 @@ const mockQuotations: Quotation[] = [
       },
     ],
     totalAmount: 3000,
-    status: "current",
+    status: "packing",
     createdAt: "2024-01-13T09:15:00Z",
     updatedAt: "2024-01-16T11:45:00Z",
     validUntil: "2024-02-13T09:15:00Z",
