@@ -285,7 +285,7 @@ export function CreateWipBatchDialog({
         }
 
         return {
-          productId: foundProduct.product_code, // Using product_code as ID
+          productId: foundProduct.code, // Using code as ID
           quantity: material.quantity,
         };
       });
