@@ -252,7 +252,22 @@ export default function OrderHistory() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Order History</h1>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Order History</h1>
+          {(customerFilter || supplierFilter) && (
+            <div className="flex items-center mt-2 gap-2">
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Filtered by: {customerFilter || supplierFilter}
+                <button
+                  onClick={clearCustomerSupplierFilter}
+                  className="ml-1 hover:bg-gray-300 rounded-full p-0.5"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Statistics */}
