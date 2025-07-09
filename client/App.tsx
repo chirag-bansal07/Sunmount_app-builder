@@ -63,9 +63,11 @@ const App = () => (
           <Route
             path="/quotations/new"
             element={
-              <InventoryLayout>
-                <NewQuotation />
-              </InventoryLayout>
+              <ProtectedRoute>
+                <InventoryLayout>
+                  <NewQuotation />
+                </InventoryLayout>
+              </ProtectedRoute>
             }
           />
           <Route
