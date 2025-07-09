@@ -120,10 +120,8 @@ export default function CurrentOrders() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "current":
+      case "packing":
         return "default";
-      case "in_progress":
-        return "secondary";
       case "completed":
         return "outline";
       default:
