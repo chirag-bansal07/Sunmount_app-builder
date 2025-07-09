@@ -36,7 +36,6 @@ interface Product {
   quantity: number;
   unitPrice: number;
   unit: string;
-  isRawMaterial: boolean;
 }
 
 export default function Dashboard() {
