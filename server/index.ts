@@ -74,6 +74,11 @@ export function createServer() {
   app.post("/api/quotations/:id/move-to-orders", moveToOrdersHandler);
   app.delete("/api/quotations/:id", deleteQuotationHandler);
 
+  // Orders routes
+  app.get("/api/currentOrders", getCurrentOrdersHandler);
+  app.get("/api/orderHistory", getOrderHistoryHandler);
+  app.post("/api/orders/:id/dispatch", dispatchOrderHandler);
+
   // Serve static files in production
   if (process.env.NODE_ENV === "production") {
     const staticPath = path.join(__dirname, "../spa");
