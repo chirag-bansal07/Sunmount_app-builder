@@ -6,7 +6,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import InventoryLayout from "./components/InventoryLayout";
 import Index from "./pages/Index";
+import Dashboard from "./pages/Dashboard";
+import Quotations from "./pages/Quotations";
+import CurrentOrders from "./pages/CurrentOrders";
+import WorkInProgress from "./pages/WorkInProgress";
+import OrderHistory from "./pages/OrderHistory";
 import NotFound from "./pages/NotFound";
 import NewOrder from "./pages/NewOrder";
 
@@ -21,6 +27,49 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/new-order" element={<NewOrder />} />
+
+          {/* Inventory Management Routes */}
+          <Route
+            path="/dashboard"
+            element={
+              <InventoryLayout>
+                <Dashboard />
+              </InventoryLayout>
+            }
+          />
+          <Route
+            path="/quotations"
+            element={
+              <InventoryLayout>
+                <Quotations />
+              </InventoryLayout>
+            }
+          />
+          <Route
+            path="/current-orders"
+            element={
+              <InventoryLayout>
+                <CurrentOrders />
+              </InventoryLayout>
+            }
+          />
+          <Route
+            path="/work-in-progress"
+            element={
+              <InventoryLayout>
+                <WorkInProgress />
+              </InventoryLayout>
+            }
+          />
+          <Route
+            path="/order-history"
+            element={
+              <InventoryLayout>
+                <OrderHistory />
+              </InventoryLayout>
+            }
+          />
+
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
