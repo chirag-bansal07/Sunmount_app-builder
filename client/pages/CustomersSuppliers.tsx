@@ -459,25 +459,13 @@ export default function CustomersSuppliers() {
         </div>
       )}
 
-      {/* Add Form Modal - placeholder for now */}
+      {/* Add Form Modal */}
       {showForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>
-                Add New {activeTab === "customers" ? "Customer" : "Supplier"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Form will be implemented in next update
-              </p>
-              <Button onClick={() => setShowForm(false)} className="w-full">
-                Close
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        <CustomerSupplierForm
+          type={activeTab === "customers" ? "customer" : "supplier"}
+          onClose={() => setShowForm(false)}
+          onSave={handleSave}
+        />
       )}
     </div>
   );
