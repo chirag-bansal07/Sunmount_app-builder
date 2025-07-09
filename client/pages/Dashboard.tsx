@@ -56,8 +56,8 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       const [inventoryResponse, wipResponse] = await Promise.all([
-        fetch("/api/inventory-report"),
-        fetch("/api/wip-batches"),
+        fetch("/api/inventory"),
+        fetch("/api/wip"),
       ]);
 
       if (inventoryResponse.ok && wipResponse.ok) {
