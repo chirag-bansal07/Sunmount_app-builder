@@ -58,7 +58,7 @@ export function createServer() {
 }
 
 // Start server if running directly
-if (require.main === module) {
+if (import.meta.url === `file://${process.argv[1]}`) {
   const app = createServer();
   const port = process.env.PORT || 3001;
 
