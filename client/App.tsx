@@ -103,9 +103,11 @@ const App = () => (
           <Route
             path="/order-history"
             element={
-              <InventoryLayout>
-                <OrderHistory />
-              </InventoryLayout>
+              <ProtectedRoute>
+                <InventoryLayout>
+                  <OrderHistory />
+                </InventoryLayout>
+              </ProtectedRoute>
             }
           />
           <Route
