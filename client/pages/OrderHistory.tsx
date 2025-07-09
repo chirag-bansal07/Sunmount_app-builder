@@ -230,6 +230,12 @@ export default function OrderHistory() {
     return new Date(dateString).toLocaleString();
   };
 
+  const clearCustomerSupplierFilter = () => {
+    setCustomerFilter("");
+    setSupplierFilter("");
+    setSearchParams({});
+  };
+
   // Calculate statistics
   const totalOrders = filteredOrders.length;
   const completedOrders = filteredOrders.filter(
