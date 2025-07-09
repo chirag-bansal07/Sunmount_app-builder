@@ -30,7 +30,14 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Login />} />
-          <Route path="/new-order" element={<NewOrder />} />
+          <Route
+            path="/new-order"
+            element={
+              <ProtectedRoute>
+                <NewOrder />
+              </ProtectedRoute>
+            }
+          />
 
           {/* Inventory Management Routes */}
           <Route
