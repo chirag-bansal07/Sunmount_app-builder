@@ -9,6 +9,7 @@ import {
   ShoppingCart,
   Settings,
   History,
+  Users,
   Plus,
   Menu,
   X,
