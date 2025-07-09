@@ -23,6 +23,13 @@ import {
   getSuppliersHandler,
   createSupplierHandler,
 } from "./routes/customers";
+import {
+  getQuotationsHandler,
+  createQuotationHandler,
+  updateQuotationHandler,
+  moveToOrdersHandler,
+  deleteQuotationHandler,
+} from "./routes/quotations";
 
 export function createServer() {
   const app = express();
