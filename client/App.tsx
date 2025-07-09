@@ -73,9 +73,11 @@ const App = () => (
           <Route
             path="/current-orders"
             element={
-              <InventoryLayout>
-                <CurrentOrders />
-              </InventoryLayout>
+              <ProtectedRoute>
+                <InventoryLayout>
+                  <CurrentOrders />
+                </InventoryLayout>
+              </ProtectedRoute>
             }
           />
           <Route
