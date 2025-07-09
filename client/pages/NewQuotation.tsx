@@ -190,7 +190,7 @@ export default function NewQuotation() {
         });
       }
 
-      const response = await fetch("/api/quotations/create", {
+      const response = await fetch("/api/quotations", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
