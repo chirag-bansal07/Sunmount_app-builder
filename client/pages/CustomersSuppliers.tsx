@@ -111,6 +111,9 @@ export default function CustomersSuppliers() {
     Customer | Supplier | null
   >(null);
   const [showForm, setShowForm] = useState(false);
+  const [editingContact, setEditingContact] = useState<
+    Customer | Supplier | null
+  >(null);
 
   const filteredCustomers = customers.filter(
     (customer) =>
