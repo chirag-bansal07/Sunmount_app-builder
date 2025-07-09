@@ -140,12 +140,10 @@ export function CreateWipBatchDialog({
     if (!productCode.trim()) return;
 
     try {
-      console.log("Fetching material details for:", productCode);
       const response = await fetch(`/api/inventory`);
 
       if (response.ok) {
         const products = await response.json();
-        console.log("Inventory response:", products);
 
         const foundProduct = products.find(
           (p: any) =>
