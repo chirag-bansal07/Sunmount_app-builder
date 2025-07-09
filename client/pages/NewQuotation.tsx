@@ -473,6 +473,9 @@ export default function NewQuotation() {
                             onChange={(e) =>
                               updateProduct(product.id, "name", e.target.value)
                             }
+                            onBlur={(e) =>
+                              fetchProductDetails(e.target.value, product.id)
+                            }
                             className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
                             placeholder="Enter name"
                           />
