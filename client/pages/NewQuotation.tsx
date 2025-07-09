@@ -108,6 +108,34 @@ export default function NewQuotation() {
     }
   };
 
+  const fetchCustomerDetails = async (companyName: string) => {
+    if (!companyName.trim()) return;
+
+    try {
+      const response = await fetch(`/api/customers`);
+      if (response.ok) {
+        const customers = await response.json();
+        const foundCustomer = customers.find(
+          (c: any) =>
+            c.company?.toLowerCase() === companyName.toLowerCase() ||
+            c.name?.toLowerCase() === companyName.toLowerCase(),
+        );
+
+        if (foundCustomer) {
+          setFormData((prev) => ({
+            ...prev,
+            customerName: foundCustomer.name || prev.customerName,
+            phoneNumber: foundCustomer.phone || prev.phoneNumber,
+            email: foundCustomer.email || prev.email,
+            address: foundCustomer.address || prev.address,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching customer details:", error);
+    }
+  };
+
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
