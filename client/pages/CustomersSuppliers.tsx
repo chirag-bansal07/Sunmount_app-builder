@@ -189,6 +189,13 @@ export default function CustomersSuppliers() {
     setSelectedContact(null);
   };
 
+  const handleViewOrders = (contact: Customer | Supplier) => {
+    // Navigate to order history with customer/supplier filter
+    navigate(
+      `/order-history?${contact.type}=${encodeURIComponent(contact.companyName)}`,
+    );
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
