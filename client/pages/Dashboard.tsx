@@ -64,13 +64,29 @@ export default function Dashboard() {
         const inventoryData = await inventoryResponse.json();
         const wipData = await wipResponse.json();
 
-        const lowStock = inventoryData.products.filter(
+        // Transform inventory data to match expected format
+        const products = inventoryData.map((product: any) => ({
+          id: product.product_code,
+          code: product.product_code,
+          name: product.name,
+          quantity: product.quantity,
+          unitPrice: product.price,
+          unit: "units",
+        }));
+
+        const lowStock = products.filter(
           (product: Product) => product.quantity < 10,
         );
 
+        const totalInventoryValue = products.reduce(
+          (sum: number, product: Product) =>
+            sum + product.quantity * product.unitPrice,
+          0,
+        );
+
         setStats({
-          totalProducts: inventoryData.summary.totalProducts,
-          totalInventoryValue: inventoryData.summary.totalInventoryValue,
+          totalProducts: products.length,
+          totalInventoryValue,
           lowStockItems: lowStock.length,
           wipBatches: wipData.filter(
             (batch: WipBatch) => batch.status === "IN_PROGRESS",
