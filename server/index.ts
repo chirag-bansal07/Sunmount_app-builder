@@ -3,7 +3,7 @@ import cors from "cors";
 import path from "path";
 
 // Import route handlers
-import { getDemoHandler } from "./routes/demo";
+import { handleDemo } from "./routes/demo";
 import { getInventoryReportHandler } from "./routes/transactions-simple";
 import {
   getWipBatchesHandler,
