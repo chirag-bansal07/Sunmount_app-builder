@@ -486,6 +486,12 @@ export function CreateWipBatchDialog({
                                 e.target.value,
                               )
                             }
+                            onBlur={(e) =>
+                              fetchExpectedOutputDetails(
+                                e.target.value,
+                                output.id,
+                              )
+                            }
                             className="w-full border-0 bg-transparent p-0 focus:ring-0 text-sm"
                             placeholder="Enter name"
                           />
