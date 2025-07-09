@@ -160,21 +160,17 @@ export default function NewQuotation() {
       }
 
       const quotationData = {
-        order_id: formData.quotationNumber,
-        party_id: formData.customerName, // Using customer name as party_id for now
-        type: activeTab, // "sales" or "purchase"
-        products: validProducts.map((product) => ({
-          product_code: product.code || product.name.toUpperCase(),
-          name: product.name,
-          description: product.description || product.name,
-          weight: parseFloat(product.weight) || 1,
-          price: parseFloat(product.price.replace(/[^0-9.-]+/g, "")),
+        customerName: formData.customerName,
+        customerEmail: formData.email,
+        customerPhone: formData.phoneNumber,
+        items: validProducts.map((product) => ({
+          productId: product.code || product.name.toUpperCase(),
+          productName: product.name,
+          productCode: product.code || product.name.toUpperCase(),
           quantity: parseFloat(product.quantity),
-          quantity_ordered: parseFloat(product.quantity),
-          quantity_received: 0, // For purchases, this will be updated when receiving
+          unitPrice: parseFloat(product.price.replace(/[^0-9.-]+/g, "")),
         })),
         notes: formData.notes,
-        bom: formData.bomNumber,
       };
 
       // First create customer if it doesn't exist
