@@ -171,11 +171,6 @@ export default function Inventory() {
             <CardTitle className="text-sm font-medium">Raw Materials</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {products.filter((p) => p.isRawMaterial).length}
-            </div>
-          </CardContent>
         </Card>
       </div>
 
@@ -232,15 +227,6 @@ export default function Inventory() {
                     <TableCell>${product.unitPrice.toFixed(2)}</TableCell>
                     <TableCell>
                       ${(product.quantity * product.unitPrice).toFixed(2)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          product.isRawMaterial ? "secondary" : "default"
-                        }
-                      >
-                        {product.isRawMaterial ? "Raw Material" : "Product"}
-                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">

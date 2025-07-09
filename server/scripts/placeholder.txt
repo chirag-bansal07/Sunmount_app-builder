@@ -1,1 +1,0 @@
-This directory is no longer used - backend functionality moved to /backend folder
