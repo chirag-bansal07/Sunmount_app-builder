@@ -17,6 +17,7 @@ import WorkInProgress from "./pages/WorkInProgress";
 import WipForm from "./pages/WipForm";
 import OrderHistory from "./pages/OrderHistory";
 import CustomersSuppliers from "./pages/CustomersSuppliers";
+import Inventory from "./pages/Inventory";
 import NotFound from "./pages/NotFound";
 import NewOrder from "./pages/NewOrder";
 
@@ -116,6 +117,16 @@ const App = () => (
               <ProtectedRoute>
                 <InventoryLayout>
                   <CustomersSuppliers />
+                </InventoryLayout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/inventory"
+            element={
+              <ProtectedRoute>
+                <InventoryLayout>
+                  <Inventory />
                 </InventoryLayout>
               </ProtectedRoute>
             }

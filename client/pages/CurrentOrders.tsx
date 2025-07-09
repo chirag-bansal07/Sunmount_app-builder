@@ -1,16 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Search,
   Plus,
@@ -20,112 +13,110 @@ import {
   ArrowRight,
   Package,
 } from "lucide-react";
-import type { Order } from "@shared/api";
 
-// Mock data - in a real app, this would come from API
-const mockOrders: Order[] = [
-  {
-    id: "1",
-    orderNumber: "ORD-2024-001",
-    quotationId: "1",
-    customerName: "Global Manufacturing Co.",
-    customerEmail: "orders@globalmanuf.com",
-    customerPhone: "+1234567890",
-    items: [
-      {
-        id: "1",
-        name: "Steel Brackets",
-        description: "Heavy duty steel brackets",
-        quantity: 100,
-        unit: "pieces",
-        pricePerUnit: 15,
-      },
-      {
-        id: "2",
-        name: "Mounting Hardware",
-        description: "Stainless steel bolts and nuts",
-        quantity: 200,
-        unit: "sets",
-        pricePerUnit: 3.5,
-      },
-    ],
-    totalAmount: 2200,
-    status: "packing",
-    createdAt: "2024-01-16T08:30:00Z",
-    updatedAt: "2024-01-16T08:30:00Z",
-    expectedDelivery: "2024-01-30T00:00:00Z",
-    notes: "Rush order - priority delivery",
-  },
-  {
-    id: "2",
-    orderNumber: "ORD-2024-002",
-    customerName: "Metro Industries",
-    customerEmail: "purchasing@metro.com",
-    customerPhone: "+1234567891",
-    items: [
-      {
-        id: "3",
-        name: "Custom Fixtures",
-        description: "Machined aluminum fixtures",
-        quantity: 50,
-        unit: "pieces",
-        pricePerUnit: 120,
-      },
-    ],
-    totalAmount: 6000,
-    status: "packing",
-    createdAt: "2024-01-14T10:15:00Z",
-    updatedAt: "2024-01-17T14:20:00Z",
-    expectedDelivery: "2024-02-05T00:00:00Z",
-    notes: "Custom specifications provided by customer",
-  },
-  {
-    id: "3",
-    orderNumber: "ORD-2024-003",
-    customerName: "TechStart Industries",
-    customerEmail: "orders@techstart.com",
-    customerPhone: "+1234567892",
-    items: [
-      {
-        id: "4",
-        name: "Electronic Enclosures",
-        description: "Weatherproof aluminum enclosures",
-        quantity: 25,
-        unit: "pieces",
-        pricePerUnit: 85,
-      },
-    ],
-    totalAmount: 2125,
-    status: "packing",
-    createdAt: "2024-01-15T16:45:00Z",
-    updatedAt: "2024-01-15T16:45:00Z",
-    expectedDelivery: "2024-01-28T00:00:00Z",
-    quantityReceived: { "4": 0 },
-  },
-];
+interface OrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productCode: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  quotationId?: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: "current" | "dispatched";
+  createdAt: string;
+  updatedAt: string;
+  dispatchedAt?: string;
+  notes?: string;
+}
 
 export default function CurrentOrders() {
-  const [orders, setOrders] = useState(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    fetchCurrentOrders();
+  }, []);
+
+  const fetchCurrentOrders = async () => {
+    try {
+      const response = await fetch("/api/currentOrders");
+      if (response.ok) {
+        const data = await response.json();
+        // Transform backend data to match frontend interface
+        const transformedData = data.map((order: any) => ({
+          id: order.order_id,
+          orderNumber: order.order_id,
+          quotationId: order.order_id,
+          customerName: order.customerName || order.party_id,
+          customerEmail: order.customerEmail,
+          customerPhone: order.customerPhone,
+          items: Array.isArray(order.products)
+            ? order.products.map((product: any, index: number) => ({
+                id: index.toString(),
+                productId: product.product_code,
+                productName: product.product_name || product.name,
+                productCode: product.product_code,
+                quantity: product.quantity || product.quantity_ordered,
+                unitPrice: product.price || product.unit_price,
+                totalPrice:
+                  (product.quantity || product.quantity_ordered) *
+                  (product.price || product.unit_price),
+              }))
+            : [],
+          totalAmount: Array.isArray(order.products)
+            ? order.products.reduce(
+                (sum: number, product: any) =>
+                  sum +
+                  (product.quantity || product.quantity_ordered) *
+                    (product.price || product.unit_price),
+                0,
+              )
+            : 0,
+          status: "current",
+          createdAt: order.date,
+          updatedAt: order.date,
+          notes: order.notes,
+        }));
+        setOrders(transformedData);
+      } else {
+        console.error("Failed to fetch current orders");
+      }
+    } catch (error) {
+      console.error("Error fetching current orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.customerName.toLowerCase().includes(searchTerm.toLowerCase());
-    const isPacking = order.status === "packing";
 
-    return matchesSearch && isPacking;
+    return matchesSearch;
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "packing":
+      case "current":
         return "default";
-      case "completed":
+      case "dispatched":
         return "outline";
       default:
-        return "default";
+        return "secondary";
     }
   };
 
@@ -133,40 +124,39 @@ export default function CurrentOrders() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const moveToNextStep = (orderId: string) => {
-    setOrders((prev) =>
-      prev.map((order) => {
-        if (order.id === orderId) {
-          if (order.status === "packing") {
-            return { ...order, status: "completed" };
-          }
-        }
-        return order;
-      }),
-    );
-    setSelectedOrder(null);
+  const dispatchOrder = async (orderId: string) => {
+    try {
+      const response = await fetch("/api/quotations/update-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          order_id: orderId,
+          status: "dispatched",
+        }),
+      });
+
+      if (response.ok) {
+        await fetchCurrentOrders(); // Refresh the list
+        setSelectedOrder(null);
+      } else {
+        const error = await response.json();
+        alert(`Failed to dispatch order: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error dispatching order:", error);
+      alert("Failed to dispatch order");
+    }
   };
 
-  const updateQuantityReceived = (
-    orderId: string,
-    itemId: string,
-    quantity: number,
-  ) => {
-    setOrders((prev) =>
-      prev.map((order) => {
-        if (order.id === orderId) {
-          return {
-            ...order,
-            quantityReceived: {
-              ...order.quantityReceived,
-              [itemId]: quantity,
-            },
-          };
-        }
-        return order;
-      }),
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading current orders...</div>
+      </div>
     );
-  };
+  }
 
   return (
     <div className="space-y-6">
@@ -221,8 +211,20 @@ export default function CurrentOrders() {
                 </div>
                 <div className="flex items-center space-x-3">
                   <Badge variant={getStatusColor(order.status)}>
-                    {order.status.replace("_", " ")}
+                    {order.status}
                   </Badge>
+                  {order.status === "current" && (
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        dispatchOrder(order.id);
+                      }}
+                    >
+                      Dispatch
+                      <ArrowRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -233,7 +235,7 @@ export default function CurrentOrders() {
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <Package className="h-4 w-4 mr-2" />
-                  Delivery: {formatDate(order.expectedDelivery)}
+                  Items: {order.items.length}
                 </div>
                 <div className="flex items-center text-sm font-medium">
                   <DollarSign className="h-4 w-4 mr-2" />$
@@ -311,13 +313,13 @@ export default function CurrentOrders() {
                 <h4 className="font-semibold mb-2">Order Information</h4>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-600">Expected Delivery:</span>{" "}
-                    {formatDate(selectedOrder.expectedDelivery)}
+                    <span className="text-gray-600">Created:</span>{" "}
+                    {formatDate(selectedOrder.createdAt)}
                   </div>
                   <div>
                     <span className="text-gray-600">Status:</span>{" "}
                     <Badge variant={getStatusColor(selectedOrder.status)}>
-                      {selectedOrder.status.replace("_", " ")}
+                      {selectedOrder.status}
                     </Badge>
                   </div>
                 </div>
@@ -333,40 +335,17 @@ export default function CurrentOrders() {
                       className="flex justify-between items-center p-3 bg-gray-50 rounded"
                     >
                       <div className="flex-1">
-                        <p className="font-medium">{item.name}</p>
+                        <p className="font-medium">{item.productName}</p>
                         <p className="text-sm text-gray-600">
-                          {item.description}
+                          Code: {item.productCode}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">
-                          {item.quantity} {item.unit}
-                        </p>
+                        <p className="font-medium">{item.quantity} units</p>
                         <p className="text-sm text-gray-600">
-                          ${item.pricePerUnit} per {item.unit}
+                          ${item.unitPrice.toFixed(2)} per unit
                         </p>
                       </div>
-                      {selectedOrder.quantityReceived && (
-                        <div className="ml-4 w-24">
-                          <label className="text-xs text-gray-600">
-                            Received:
-                          </label>
-                          <Input
-                            type="number"
-                            min="0"
-                            max={item.quantity}
-                            value={selectedOrder.quantityReceived[item.id] || 0}
-                            onChange={(e) =>
-                              updateQuantityReceived(
-                                selectedOrder.id,
-                                item.id,
-                                parseInt(e.target.value) || 0,
-                              )
-                            }
-                            className="h-8 text-sm"
-                          />
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -382,26 +361,13 @@ export default function CurrentOrders() {
 
               {/* Actions */}
               <div className="flex gap-2 pt-4">
-                {selectedOrder.status === "packing" && (
+                {selectedOrder.status === "current" && (
                   <Button
                     className="flex-1"
-                    onClick={() => moveToNextStep(selectedOrder.id)}
+                    onClick={() => dispatchOrder(selectedOrder.id)}
                   >
-                    Mark as Completed
+                    Dispatch Order
                     <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                )}
-                {selectedOrder.quantityReceived && (
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => {
-                      // Handle inventory update
-                      console.log("Update inventory with received quantities");
-                      setSelectedOrder(null);
-                    }}
-                  >
-                    Update Inventory
                   </Button>
                 )}
                 <Button
@@ -409,7 +375,7 @@ export default function CurrentOrders() {
                   className="flex-1"
                   onClick={() => setSelectedOrder(null)}
                 >
-                  Edit Order
+                  Close
                 </Button>
               </div>
             </CardContent>

@@ -82,22 +82,70 @@ export default function NewQuotation() {
     }, 0);
   };
 
-  const handleSubmit = () => {
-    // In a real app, this would create the quotation via API
-    const quotationData = {
-      ...formData,
-      type: activeTab,
-      items: products.filter((p) => p.name && p.price && p.quantity),
-      totalAmount: calculateTotal(),
-      status: "quotation",
-      createdAt: new Date().toISOString(),
-    };
+  const handleSubmit = async () => {
+    try {
+      const validProducts = products.filter(
+        (p) => p.name && p.price && p.quantity,
+      );
 
-    console.log("Creating quotation:", quotationData);
-    alert(
-      `${activeTab === "sales" ? "Sales" : "Purchase"} quotation created successfully!`,
-    );
-    navigate("/quotations");
+      if (!formData.customerName || validProducts.length === 0) {
+        alert("Please fill in customer name and at least one product");
+        return;
+      }
+
+      const quotationData = {
+        order_id: formData.quotationNumber,
+        party_id: formData.customerName, // Using customer name as party_id for now
+        type: activeTab, // "sales" or "purchase"
+        products: validProducts.map((product) => ({
+          product_code: product.code || product.name.toUpperCase(),
+          name: product.name,
+          description: product.description || product.name,
+          weight: parseFloat(product.weight) || 1,
+          price: parseFloat(product.price.replace(/[^0-9.-]+/g, "")),
+          quantity: parseFloat(product.quantity),
+          quantity_ordered: parseFloat(product.quantity),
+          quantity_received: 0, // For purchases, this will be updated when receiving
+        })),
+        notes: formData.notes,
+        bom: formData.bomNumber,
+      };
+
+      // First create customer if it doesn't exist
+      if (formData.customerName && formData.email) {
+        await fetch("/api/customers", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            id: formData.customerName,
+            name: formData.customerName,
+            email: formData.email,
+            phone: formData.phoneNumber,
+            address: formData.address,
+          }),
+        });
+      }
+
+      const response = await fetch("/api/quotations/create", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(quotationData),
+      });
+
+      if (response.ok) {
+        navigate("/quotations");
+      } else {
+        const error = await response.json();
+        alert(`Failed to create quotation: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error creating quotation:", error);
+      alert("Failed to create quotation");
+    }
   };
 
   return (

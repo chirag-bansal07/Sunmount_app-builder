@@ -14,6 +14,8 @@ import {
   Menu,
   X,
   LogOut,
+  Package,
+  Factory,
 } from "lucide-react";
 
 interface SidebarItem {
@@ -29,6 +31,11 @@ const sidebarItems: SidebarItem[] = [
     icon: LayoutDashboard,
   },
   {
+    title: "Inventory",
+    href: "/inventory",
+    icon: Package,
+  },
+  {
     title: "Quotations",
     href: "/quotations",
     icon: FileText,
@@ -41,7 +48,7 @@ const sidebarItems: SidebarItem[] = [
   {
     title: "Work in Progress",
     href: "/work-in-progress",
-    icon: Settings,
+    icon: Factory,
   },
   {
     title: "Order History",

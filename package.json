@@ -18,7 +18,11 @@
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:seed": "tsx server/scripts/seed.ts",
+    "db:setup": "npm run db:generate && npm run db:push && npm run db:seed"
   },
   "dependencies": {
     "express": "^4.18.2",
@@ -84,7 +88,7 @@
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
     "react-resizable-panels": "^2.1.3",
-    "react-router-dom": "^6.26.2",
+    "react-router-dom": "^6.30.1",
     "recharts": "^2.12.7",
     "serverless-http": "^3.2.0",
     "sonner": "^1.5.0",

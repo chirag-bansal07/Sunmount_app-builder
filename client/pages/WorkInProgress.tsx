@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,151 +18,118 @@ import {
   Calendar,
   Package,
   ArrowRight,
-  Beaker,
+  Factory,
 } from "lucide-react";
-import type { WorkInProgress } from "@shared/api";
+import { CompleteWipBatchDialog } from "@/components/CompleteWipBatchDialog";
 
-// Mock data - in a real app, this would come from API
-const mockWipItems: WorkInProgress[] = [
-  {
-    id: "1",
-    batchNumber: "BATCH-2024-001",
-    orderId: "1",
-    orderNumber: "ORD-2024-001",
-    rawMaterialsUsed: [
-      {
-        id: "1",
-        name: "Steel Sheet",
-        quantity: 50,
-        unit: "kg",
-        costPerUnit: 2.5,
-      },
-      {
-        id: "2",
-        name: "Stainless Steel Bolts",
-        quantity: 200,
-        unit: "pieces",
-        costPerUnit: 0.15,
-      },
-    ],
-    expectedOutput: [
-      {
-        id: "1",
-        name: "Steel Brackets",
-        description: "Heavy duty steel brackets",
-        quantity: 100,
-        unit: "pieces",
-        pricePerUnit: 15,
-      },
-    ],
-    actualOutput: [
-      {
-        id: "1",
-        name: "Steel Brackets",
-        description: "Heavy duty steel brackets",
-        quantity: 95,
-        unit: "pieces",
-        pricePerUnit: 15,
-      },
-    ],
-    startDate: "2024-01-16T08:00:00Z",
-    expectedEndDate: "2024-01-20T17:00:00Z",
-    actualEndDate: "2024-01-20T16:30:00Z",
-    status: "completed",
-    notes: "Minor defects in 5 pieces, within acceptable tolerance",
-  },
-  {
-    id: "2",
-    batchNumber: "BATCH-2024-002",
-    orderId: "2",
-    orderNumber: "ORD-2024-002",
-    rawMaterialsUsed: [
-      {
-        id: "3",
-        name: "Aluminum Rod",
-        quantity: 25,
-        unit: "pieces",
-        costPerUnit: 12,
-      },
-      {
-        id: "4",
-        name: "Cutting Fluid",
-        quantity: 2,
-        unit: "liters",
-        costPerUnit: 15,
-      },
-    ],
-    expectedOutput: [
-      {
-        id: "3",
-        name: "Custom Fixtures",
-        description: "Machined aluminum fixtures",
-        quantity: 50,
-        unit: "pieces",
-        pricePerUnit: 120,
-      },
-    ],
-    startDate: "2024-01-17T09:00:00Z",
-    expectedEndDate: "2024-01-25T17:00:00Z",
-    status: "in_progress",
-    notes: "Complex machining process, monitoring quality closely",
-  },
-  {
-    id: "3",
-    batchNumber: "BATCH-2024-003",
-    orderId: "3",
-    orderNumber: "ORD-2024-003",
-    rawMaterialsUsed: [
-      {
-        id: "5",
-        name: "Aluminum Sheet",
-        quantity: 15,
-        unit: "sheets",
-        costPerUnit: 45,
-      },
-    ],
-    expectedOutput: [
-      {
-        id: "4",
-        name: "Electronic Enclosures",
-        description: "Weatherproof aluminum enclosures",
-        quantity: 25,
-        unit: "pieces",
-        pricePerUnit: 85,
-      },
-    ],
-    startDate: "2024-01-22T08:00:00Z",
-    expectedEndDate: "2024-01-26T17:00:00Z",
-    status: "planned",
-    notes: "Waiting for quality control approval on raw materials",
-  },
-];
+interface Product {
+  id: string;
+  code: string;
+  name: string;
+  unit: string;
+}
+
+interface WipMaterial {
+  id: string;
+  quantity: number;
+  product: Product;
+}
+
+interface WipOutput {
+  id: string;
+  quantity: number;
+  product: Product;
+}
+
+interface WipBatch {
+  id: string;
+  batchNumber: string;
+  status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  startDate: string;
+  endDate?: string;
+  notes?: string;
+  materials: WipMaterial[];
+  outputs: WipOutput[];
+}
 
 export default function WorkInProgress() {
-  const [wipItems, setWipItems] = useState(mockWipItems);
+  const [wipBatches, setWipBatches] = useState<WipBatch[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [selectedWip, setSelectedWip] = useState<WorkInProgress | null>(null);
+  const [selectedBatch, setSelectedBatch] = useState<WipBatch | null>(null);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 
-  const filteredWipItems = wipItems.filter((item) => {
-    const matchesSearch =
-      item.batchNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.orderNumber.toLowerCase().includes(searchTerm.toLowerCase());
+  useEffect(() => {
+    fetchWipBatches();
+  }, []);
+
+  const fetchWipBatches = async () => {
+    try {
+      const response = await fetch("/api/wip");
+      if (response.ok) {
+        const data = await response.json();
+        // Transform the data to match frontend interface
+        const transformedData = data.map((batch: any) => ({
+          id: batch.id.toString(),
+          batchNumber: batch.batch_number,
+          status: batch.status.toUpperCase(),
+          startDate: batch.start_date,
+          endDate: batch.end_date,
+          notes: "",
+          materials: Array.isArray(batch.raw_materials)
+            ? batch.raw_materials.map((mat: any, index: number) => ({
+                id: index.toString(),
+                quantity: mat.quantity,
+                product: {
+                  id: mat.product_code,
+                  code: mat.product_code,
+                  name: mat.product_code, // Will be enhanced with product lookup
+                  unit: "units",
+                },
+              }))
+            : [],
+          outputs: Array.isArray(batch.output)
+            ? batch.output.map((out: any, index: number) => ({
+                id: index.toString(),
+                quantity: out.quantity,
+                product: {
+                  id: out.product_code,
+                  code: out.product_code,
+                  name: out.product_code, // Will be enhanced with product lookup
+                  unit: "units",
+                },
+              }))
+            : [],
+        }));
+        setWipBatches(transformedData);
+      } else {
+        console.error("Failed to fetch WIP batches");
+      }
+    } catch (error) {
+      console.error("Error fetching WIP batches:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredWipBatches = wipBatches.filter((batch) => {
+    const matchesSearch = batch.batchNumber
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === "all" || item.status === statusFilter;
+      statusFilter === "all" || batch.status.toLowerCase() === statusFilter;
 
     return matchesSearch && matchesStatus;
   });
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case "planned":
-        return "outline";
+    switch (status.toLowerCase()) {
       case "in_progress":
         return "default";
       case "completed":
         return "secondary";
-      case "on_hold":
+      case "cancelled":
         return "destructive";
       default:
         return "outline";
@@ -177,37 +144,19 @@ export default function WorkInProgress() {
     return new Date(dateString).toLocaleString();
   };
 
-  const moveToNextStep = (wipId: string) => {
-    setWipItems((prev) =>
-      prev.map((item) => {
-        if (item.id === wipId) {
-          if (item.status === "planned") {
-            return { ...item, status: "in_progress" };
-          } else if (item.status === "in_progress") {
-            return {
-              ...item,
-              status: "completed",
-              actualEndDate: new Date().toISOString(),
-            };
-          }
-        }
-        return item;
-      }),
-    );
-    setSelectedWip(null);
-  };
-
-  const calculateTotalMaterialCost = (materials: any[]) => {
+  const calculateMaterialCost = (materials: WipMaterial[]) => {
     return materials.reduce((total, material) => {
-      return total + material.quantity * material.costPerUnit;
+      return total + material.quantity * (material.product?.unitPrice || 0);
     }, 0);
   };
 
-  const calculateExpectedValue = (products: any[]) => {
-    return products.reduce((total, product) => {
-      return total + product.quantity * product.pricePerUnit;
-    }, 0);
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading WIP batches...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -241,67 +190,78 @@ export default function WorkInProgress() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="planned">Planned</SelectItem>
                 <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="on_hold">On Hold</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* WIP Items List */}
+      {/* WIP Batches List */}
       <div className="grid gap-4">
-        {filteredWipItems.map((wipItem) => (
+        {filteredWipBatches.map((batch) => (
           <Card
-            key={wipItem.id}
+            key={batch.id}
             className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setSelectedWip(wipItem)}
+            onClick={() => setSelectedBatch(batch)}
           >
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
                   <div className="p-2 bg-orange-100 rounded-lg">
-                    <Beaker className="h-6 w-6 text-orange-600" />
+                    <Factory className="h-6 w-6 text-orange-600" />
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold">
-                      {wipItem.batchNumber}
+                      {batch.batchNumber}
                     </h3>
                     <p className="text-gray-600">
-                      Order: {wipItem.orderNumber}
+                      Materials: {batch.materials.length} items
                     </p>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <Badge variant={getStatusColor(wipItem.status)}>
-                    {wipItem.status.replace("_", " ")}
+                  <Badge variant={getStatusColor(batch.status)}>
+                    {batch.status.replace("_", " ")}
                   </Badge>
+                  {batch.status === "IN_PROGRESS" && (
+                    <Button
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedBatch(batch);
+                        setIsCompleteDialogOpen(true);
+                      }}
+                    >
+                      Complete
+                    </Button>
+                  )}
                 </div>
               </div>
 
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center text-sm text-gray-600">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Started: {formatDate(wipItem.startDate)}
+                  Started: {formatDate(batch.startDate)}
                 </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Package className="h-4 w-4 mr-2" />
-                  Expected: {formatDate(wipItem.expectedEndDate)}
-                </div>
+                {batch.endDate && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Package className="h-4 w-4 mr-2" />
+                    Completed: {formatDate(batch.endDate)}
+                  </div>
+                )}
                 <div className="flex items-center text-sm font-medium">
                   <Settings className="h-4 w-4 mr-2" />
                   Materials: $
-                  {calculateTotalMaterialCost(
-                    wipItem.rawMaterialsUsed,
-                  ).toLocaleString()}
+                  {calculateMaterialCost(batch.materials).toFixed(2)}
                 </div>
               </div>
 
-              {wipItem.notes && (
+              {batch.notes && (
                 <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
-                  {wipItem.notes}
+                  {batch.notes}
                 </div>
               )}
             </CardContent>
@@ -309,15 +269,15 @@ export default function WorkInProgress() {
         ))}
       </div>
 
-      {filteredWipItems.length === 0 && (
+      {filteredWipBatches.length === 0 && (
         <Card>
           <CardContent className="p-8 text-center">
-            <Beaker className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <Factory className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No WIP items found
+              No WIP batches found
             </h3>
             <p className="text-gray-600 mb-4">
-              Try adjusting your search or filters, or add a new batch to WIP.
+              Try adjusting your search or filters, or create a new WIP batch.
             </p>
             <Link to="/work-in-progress/new">
               <Button>
@@ -329,21 +289,34 @@ export default function WorkInProgress() {
         </Card>
       )}
 
-      {/* WIP Details Modal */}
-      {selectedWip && (
+      {/* Dialogs */}
+      {selectedBatch && (
+        <CompleteWipBatchDialog
+          open={isCompleteDialogOpen}
+          onOpenChange={setIsCompleteDialogOpen}
+          batch={selectedBatch}
+          onSuccess={fetchWipBatches}
+        />
+      )}
+
+      {/* Batch Details Modal */}
+      {selectedBatch && !isCompleteDialogOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-4xl max-h-[90vh] overflow-auto">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
                   <CardTitle className="text-xl">
-                    {selectedWip.batchNumber}
+                    {selectedBatch.batchNumber}
                   </CardTitle>
-                  <p className="text-gray-600 mt-1">
-                    Order: {selectedWip.orderNumber}
-                  </p>
+                  <Badge
+                    variant={getStatusColor(selectedBatch.status)}
+                    className="mt-2"
+                  >
+                    {selectedBatch.status.replace("_", " ")}
+                  </Badge>
                 </div>
-                <Button variant="ghost" onClick={() => setSelectedWip(null)}>
+                <Button variant="ghost" onClick={() => setSelectedBatch(null)}>
                   ×
                 </Button>
               </div>
@@ -352,216 +325,105 @@ export default function WorkInProgress() {
               {/* Timeline */}
               <div>
                 <h4 className="font-semibold mb-2">Timeline</h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <span className="text-gray-600">Start Date:</span>{" "}
-                    {formatDateTime(selectedWip.startDate)}
+                    {formatDateTime(selectedBatch.startDate)}
                   </div>
-                  <div>
-                    <span className="text-gray-600">Expected End:</span>{" "}
-                    {formatDateTime(selectedWip.expectedEndDate)}
-                  </div>
-                  {selectedWip.actualEndDate && (
+                  {selectedBatch.endDate && (
                     <div>
-                      <span className="text-gray-600">Actual End:</span>{" "}
-                      {formatDateTime(selectedWip.actualEndDate)}
+                      <span className="text-gray-600">End Date:</span>{" "}
+                      {formatDateTime(selectedBatch.endDate)}
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Raw Materials Used */}
+              {/* Materials Used */}
               <div>
-                <h4 className="font-semibold mb-3">Raw Materials Used</h4>
-                <div className="border rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="text-left p-3 font-medium">Material</th>
-                        <th className="text-left p-3 font-medium">Quantity</th>
-                        <th className="text-left p-3 font-medium">Unit Cost</th>
-                        <th className="text-left p-3 font-medium">
-                          Total Cost
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedWip.rawMaterialsUsed.map((material) => (
-                        <tr key={material.id} className="border-t">
-                          <td className="p-3">{material.name}</td>
-                          <td className="p-3">
-                            {material.quantity} {material.unit}
-                          </td>
-                          <td className="p-3">
-                            ${material.costPerUnit.toFixed(2)}
-                          </td>
-                          <td className="p-3 font-medium">
-                            $
-                            {(material.quantity * material.costPerUnit).toFixed(
-                              2,
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="border-t bg-gray-50">
-                        <td colSpan={3} className="p-3 font-medium">
-                          Total Material Cost:
-                        </td>
-                        <td className="p-3 font-bold">
-                          $
-                          {calculateTotalMaterialCost(
-                            selectedWip.rawMaterialsUsed,
-                          ).toFixed(2)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <h4 className="font-semibold mb-3">Materials Used</h4>
+                <div className="space-y-2">
+                  {selectedBatch.materials.map((material) => (
+                    <div
+                      key={material.id}
+                      className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                    >
+                      <div>
+                        <div className="font-medium">
+                          {material.product.name}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          Code: {material.product.code}
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-medium">
+                          {material.quantity} {material.product.unit}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Expected Output */}
-              <div>
-                <h4 className="font-semibold mb-3">Expected Output</h4>
-                <div className="border rounded-lg overflow-hidden">
-                  <table className="w-full">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="text-left p-3 font-medium">Product</th>
-                        <th className="text-left p-3 font-medium">
-                          Description
-                        </th>
-                        <th className="text-left p-3 font-medium">Quantity</th>
-                        <th className="text-left p-3 font-medium">
-                          Unit Price
-                        </th>
-                        <th className="text-left p-3 font-medium">
-                          Total Value
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {selectedWip.expectedOutput.map((product) => (
-                        <tr key={product.id} className="border-t">
-                          <td className="p-3 font-medium">{product.name}</td>
-                          <td className="p-3">{product.description}</td>
-                          <td className="p-3">
-                            {product.quantity} {product.unit}
-                          </td>
-                          <td className="p-3">
-                            ${product.pricePerUnit.toFixed(2)}
-                          </td>
-                          <td className="p-3 font-medium">
-                            $
-                            {(product.quantity * product.pricePerUnit).toFixed(
-                              2,
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                      <tr className="border-t bg-gray-50">
-                        <td colSpan={4} className="p-3 font-medium">
-                          Total Expected Value:
-                        </td>
-                        <td className="p-3 font-bold">
-                          $
-                          {calculateExpectedValue(
-                            selectedWip.expectedOutput,
-                          ).toFixed(2)}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* Actual Output (if completed) */}
-              {selectedWip.actualOutput && (
+              {/* Outputs (if completed) */}
+              {selectedBatch.outputs.length > 0 && (
                 <div>
-                  <h4 className="font-semibold mb-3">Actual Output</h4>
-                  <div className="border rounded-lg overflow-hidden">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="text-left p-3 font-medium">Product</th>
-                          <th className="text-left p-3 font-medium">
-                            Expected
-                          </th>
-                          <th className="text-left p-3 font-medium">Actual</th>
-                          <th className="text-left p-3 font-medium">
-                            Efficiency
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {selectedWip.actualOutput.map((product, index) => {
-                          const expected = selectedWip.expectedOutput[index];
-                          const efficiency =
-                            (product.quantity / expected.quantity) * 100;
-                          return (
-                            <tr key={product.id} className="border-t">
-                              <td className="p-3 font-medium">
-                                {product.name}
-                              </td>
-                              <td className="p-3">
-                                {expected.quantity} {expected.unit}
-                              </td>
-                              <td className="p-3">
-                                {product.quantity} {product.unit}
-                              </td>
-                              <td className="p-3">
-                                <Badge
-                                  variant={
-                                    efficiency >= 95 ? "default" : "secondary"
-                                  }
-                                >
-                                  {efficiency.toFixed(1)}%
-                                </Badge>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </table>
+                  <h4 className="font-semibold mb-3">Outputs Produced</h4>
+                  <div className="space-y-2">
+                    {selectedBatch.outputs.map((output) => (
+                      <div
+                        key={output.id}
+                        className="flex justify-between items-center p-3 bg-green-50 rounded"
+                      >
+                        <div>
+                          <div className="font-medium">
+                            {output.product.name}
+                          </div>
+                          <div className="text-sm text-gray-600">
+                            Code: {output.product.code}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">
+                            {output.quantity} {output.product.unit}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
               {/* Notes */}
-              {selectedWip.notes && (
+              {selectedBatch.notes && (
                 <div>
                   <h4 className="font-semibold mb-2">Notes</h4>
                   <div className="p-3 bg-gray-50 rounded">
-                    {selectedWip.notes}
+                    {selectedBatch.notes}
                   </div>
                 </div>
               )}
 
               {/* Actions */}
               <div className="flex gap-2 pt-4">
-                {selectedWip.status === "planned" && (
+                {selectedBatch.status === "IN_PROGRESS" && (
                   <Button
                     className="flex-1"
-                    onClick={() => moveToNextStep(selectedWip.id)}
+                    onClick={() => {
+                      setIsCompleteDialogOpen(true);
+                    }}
                   >
-                    Start Production
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                )}
-                {selectedWip.status === "in_progress" && (
-                  <Button
-                    className="flex-1"
-                    onClick={() => moveToNextStep(selectedWip.id)}
-                  >
-                    Mark as Completed
+                    Complete Batch
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 )}
                 <Button
                   variant="outline"
                   className="flex-1"
-                  onClick={() => setSelectedWip(null)}
+                  onClick={() => setSelectedBatch(null)}
                 >
-                  Edit Batch
+                  Close
                 </Button>
               </div>
             </CardContent>

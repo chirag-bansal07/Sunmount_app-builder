@@ -19,137 +19,108 @@ import {
   CheckCircle,
   XCircle,
   X,
+  Package,
 } from "lucide-react";
-import type { Order } from "@shared/api";
 
-// Mock data - in a real app, this would come from API
-const mockHistoryOrders: Order[] = [
-  {
-    id: "h1",
-    orderNumber: "ORD-2023-045",
-    quotationId: "q1",
-    customerName: "Global Manufacturing Co.",
-    customerEmail: "orders@globalmanuf.com",
-    customerPhone: "+1234567890",
-    items: [
-      {
-        id: "1",
-        name: "Steel Brackets",
-        description: "Heavy duty steel brackets",
-        quantity: 200,
-        unit: "pieces",
-        pricePerUnit: 15,
-      },
-    ],
-    totalAmount: 3000,
-    status: "completed",
-    createdAt: "2023-12-15T08:30:00Z",
-    updatedAt: "2023-12-28T17:00:00Z",
-    expectedDelivery: "2023-12-25T00:00:00Z",
-    notes: "Delivered on time, customer satisfied",
-  },
-  {
-    id: "h2",
-    orderNumber: "ORD-2023-044",
-    customerName: "TechStart Industries",
-    customerEmail: "orders@techstart.com",
-    customerPhone: "+1234567891",
-    items: [
-      {
-        id: "2",
-        name: "Custom Fixtures",
-        description: "Machined aluminum fixtures",
-        quantity: 75,
-        unit: "pieces",
-        pricePerUnit: 120,
-      },
-    ],
-    totalAmount: 9000,
-    status: "completed",
-    createdAt: "2023-12-10T10:15:00Z",
-    updatedAt: "2023-12-22T16:30:00Z",
-    expectedDelivery: "2023-12-20T00:00:00Z",
-    notes: "Complex specifications, delivered successfully",
-  },
-  {
-    id: "h3",
-    orderNumber: "ORD-2023-043",
-    customerName: "BuildCo Ltd",
-    customerEmail: "orders@buildco.com",
-    customerPhone: "+1234567892",
-    items: [
-      {
-        id: "3",
-        name: "Electronic Enclosures",
-        description: "Weatherproof aluminum enclosures",
-        quantity: 30,
-        unit: "pieces",
-        pricePerUnit: 85,
-      },
-    ],
-    totalAmount: 2550,
-    status: "cancelled",
-    createdAt: "2023-12-05T14:20:00Z",
-    updatedAt: "2023-12-08T11:45:00Z",
-    expectedDelivery: "2023-12-18T00:00:00Z",
-    notes: "Cancelled due to customer budget constraints",
-  },
-  {
-    id: "h4",
-    orderNumber: "ORD-2023-042",
-    customerName: "Metro Industries",
-    customerEmail: "purchasing@metro.com",
-    customerPhone: "+1234567893",
-    items: [
-      {
-        id: "4",
-        name: "Steel Fasteners",
-        description: "High-grade steel bolts and nuts",
-        quantity: 500,
-        unit: "sets",
-        pricePerUnit: 3.5,
-      },
-    ],
-    totalAmount: 1750,
-    status: "completed",
-    createdAt: "2023-11-28T09:00:00Z",
-    updatedAt: "2023-12-05T14:30:00Z",
-    expectedDelivery: "2023-12-03T00:00:00Z",
-    notes: "Repeat customer, fast turnaround",
-  },
-  {
-    id: "h5",
-    orderNumber: "ORD-2023-041",
-    customerName: "Precision Works",
-    customerEmail: "orders@precision.com",
-    customerPhone: "+1234567894",
-    items: [
-      {
-        id: "5",
-        name: "Machined Components",
-        description: "Precision-machined metal components",
-        quantity: 25,
-        unit: "pieces",
-        pricePerUnit: 250,
-      },
-    ],
-    totalAmount: 6250,
-    status: "completed",
-    createdAt: "2023-11-20T11:30:00Z",
-    updatedAt: "2023-11-30T16:00:00Z",
-    expectedDelivery: "2023-11-28T00:00:00Z",
-    notes: "High precision requirements met successfully",
-  },
-];
+interface OrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productCode: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+}
+
+interface Order {
+  id: string;
+  orderNumber: string;
+  quotationId?: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  items: OrderItem[];
+  totalAmount: number;
+  status: "current" | "dispatched" | "completed";
+  type: "sales" | "purchase";
+  createdAt: string;
+  updatedAt: string;
+  dispatchedAt?: string;
+  notes?: string;
+}
 
 export default function OrderHistory() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [orders, setOrders] = useState(mockHistoryOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState<string>("all");
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [customerFilter, setCustomerFilter] = useState<string>("");
   const [supplierFilter, setSupplierFilter] = useState<string>("");
+  const [typeFilter, setTypeFilter] = useState<string>("all");
+
+  useEffect(() => {
+    fetchOrderHistory();
+  }, []);
+
+  const fetchOrderHistory = async () => {
+    try {
+      const response = await fetch("/api/orderHistory");
+      if (response.ok) {
+        const data = await response.json();
+        // Transform backend data to match frontend interface
+        const transformedData = data.map((order: any) => ({
+          id: order.order_id,
+          orderNumber: order.order_id,
+          quotationId: order.order_id,
+          customerName: order.customerName || order.party_id,
+          customerEmail: order.customerEmail,
+          customerPhone: order.customerPhone,
+          items: Array.isArray(order.products)
+            ? order.products.map((product: any, index: number) => ({
+                id: index.toString(),
+                productId: product.product_code,
+                productName: product.product_name || product.name,
+                productCode: product.product_code,
+                quantity: product.quantity || product.quantity_ordered,
+                unitPrice: product.price || product.unit_price,
+                totalPrice:
+                  (product.quantity || product.quantity_ordered) *
+                  (product.price || product.unit_price),
+              }))
+            : [],
+          totalAmount: Array.isArray(order.products)
+            ? order.products.reduce(
+                (sum: number, product: any) =>
+                  sum +
+                  (product.quantity || product.quantity_ordered) *
+                    (product.price || product.unit_price),
+                0,
+              )
+            : 0,
+          status:
+            order.status === "dispatched"
+              ? "dispatched"
+              : order.status === "completed"
+                ? "completed"
+                : "current",
+          type: order.type,
+          createdAt: order.date,
+          updatedAt: order.date,
+          dispatchedAt: order.status === "dispatched" ? order.date : undefined,
+          notes: order.notes,
+        }));
+        setOrders(transformedData);
+      } else {
+        console.error("Failed to fetch order history");
+      }
+    } catch (error) {
+      console.error("Error fetching order history:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Handle URL parameters for filtering
   useEffect(() => {
@@ -203,22 +174,39 @@ export default function OrderHistory() {
       }
     }
 
+    // Type filtering
+    const matchesType = typeFilter === "all" || order.type === typeFilter;
+
     return (
       matchesSearch &&
       matchesDate &&
       matchesCustomerFilter &&
-      matchesSupplierFilter
+      matchesSupplierFilter &&
+      matchesType
     );
   });
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "completed":
+      case "dispatched":
         return "default";
-      case "cancelled":
-        return "destructive";
-      default:
+      case "completed":
         return "secondary";
+      case "current":
+        return "outline";
+      default:
+        return "outline";
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case "sales":
+        return "bg-blue-100 text-blue-800";
+      case "purchase":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
@@ -230,6 +218,14 @@ export default function OrderHistory() {
     return new Date(dateString).toLocaleString();
   };
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading order history...</div>
+      </div>
+    );
+  }
+
   const clearCustomerSupplierFilter = () => {
     setCustomerFilter("");
     setSupplierFilter("");
@@ -238,14 +234,14 @@ export default function OrderHistory() {
 
   // Calculate statistics
   const totalOrders = filteredOrders.length;
-  const completedOrders = filteredOrders.filter(
-    (order) => order.status === "completed",
+  const dispatchedOrders = filteredOrders.filter(
+    (order) => order.status === "dispatched",
   ).length;
-  const cancelledOrders = filteredOrders.filter(
-    (order) => order.status === "cancelled",
+  const currentOrders = filteredOrders.filter(
+    (order) => order.status === "current",
   ).length;
   const totalRevenue = filteredOrders
-    .filter((order) => order.status === "completed")
+    .filter((order) => order.status === "dispatched")
     .reduce((sum, order) => sum + order.totalAmount, 0);
 
   return (
@@ -287,9 +283,9 @@ export default function OrderHistory() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Completed</p>
+                <p className="text-sm text-gray-600">Dispatched</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {completedOrders}
+                  {dispatchedOrders}
                 </p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-600" />
@@ -300,12 +296,12 @@ export default function OrderHistory() {
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Cancelled</p>
-                <p className="text-2xl font-bold text-red-600">
-                  {cancelledOrders}
+                <p className="text-sm text-gray-600">Current</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  {currentOrders}
                 </p>
               </div>
-              <XCircle className="h-8 w-8 text-red-600" />
+              <Package className="h-8 w-8 text-blue-600" />
             </div>
           </CardContent>
         </Card>
@@ -338,6 +334,17 @@ export default function OrderHistory() {
               />
             </div>
 
+            <Select value={typeFilter} onValueChange={setTypeFilter}>
+              <SelectTrigger className="w-full md:w-40">
+                <SelectValue placeholder="Order Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                <SelectItem value="sales">Sales Orders</SelectItem>
+                <SelectItem value="purchase">Purchase Orders</SelectItem>
+              </SelectContent>
+            </Select>
+
             <Select value={dateFilter} onValueChange={setDateFilter}>
               <SelectTrigger className="w-full md:w-40">
                 <SelectValue placeholder="Date Range" />
@@ -366,21 +373,15 @@ export default function OrderHistory() {
                 <div className="flex items-center space-x-4">
                   <div
                     className={`p-2 rounded-lg ${
-                      order.status === "completed"
+                      order.status === "dispatched"
                         ? "bg-green-100"
-                        : "bg-red-100"
+                        : "bg-blue-100"
                     }`}
                   >
-                    {order.status === "completed" ? (
-                      <CheckCircle
-                        className={`h-6 w-6 ${
-                          order.status === "completed"
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      />
+                    {order.status === "dispatched" ? (
+                      <CheckCircle className="h-6 w-6 text-green-600" />
                     ) : (
-                      <XCircle className="h-6 w-6 text-red-600" />
+                      <Package className="h-6 w-6 text-blue-600" />
                     )}
                   </div>
                   <div>
@@ -391,6 +392,9 @@ export default function OrderHistory() {
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
+                  <Badge className={getTypeColor(order.type)}>
+                    {order.type}
+                  </Badge>
                   <Badge variant={getStatusColor(order.status)}>
                     {order.status}
                   </Badge>
@@ -400,11 +404,11 @@ export default function OrderHistory() {
               <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex items-center text-sm text-gray-600">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Completed: {formatDate(order.updatedAt)}
+                  Created: {formatDate(order.createdAt)}
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Expected: {formatDate(order.expectedDelivery)}
+                  <Package className="h-4 w-4 mr-2" />
+                  Items: {order.items.length}
                 </div>
                 <div className="flex items-center text-sm font-medium">
                   <DollarSign className="h-4 w-4 mr-2" />$
@@ -465,8 +469,10 @@ export default function OrderHistory() {
                     {formatDateTime(selectedOrder.createdAt)}
                   </div>
                   <div>
-                    <span className="text-gray-600">Expected Delivery:</span>{" "}
-                    {formatDateTime(selectedOrder.expectedDelivery)}
+                    <span className="text-gray-600">Dispatched:</span>{" "}
+                    {selectedOrder.dispatchedAt
+                      ? formatDateTime(selectedOrder.dispatchedAt)
+                      : "Not dispatched"}
                   </div>
                   <div>
                     <span className="text-gray-600">Last Updated:</span>{" "}
@@ -506,17 +512,15 @@ export default function OrderHistory() {
                       className="flex justify-between items-center p-3 bg-gray-50 rounded"
                     >
                       <div>
-                        <p className="font-medium">{item.name}</p>
+                        <p className="font-medium">{item.productName}</p>
                         <p className="text-sm text-gray-600">
-                          {item.description}
+                          Code: {item.productCode}
                         </p>
                       </div>
                       <div className="text-right">
-                        <p className="font-medium">
-                          {item.quantity} {item.unit}
-                        </p>
+                        <p className="font-medium">{item.quantity} units</p>
                         <p className="text-sm text-gray-600">
-                          ${item.pricePerUnit} per {item.unit}
+                          ${item.unitPrice.toFixed(2)} per unit
                         </p>
                       </div>
                     </div>

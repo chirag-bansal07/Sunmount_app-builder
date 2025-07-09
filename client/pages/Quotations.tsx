@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,90 +18,103 @@ import {
   FileText,
   Calendar,
   DollarSign,
+  ArrowRight,
+  Package,
 } from "lucide-react";
-import type { Quotation } from "@shared/api";
 
-// Mock data - in a real app, this would come from API
-const mockQuotations: Quotation[] = [
-  {
-    id: "1",
-    quotationNumber: "QT-2024-001",
-    type: "sales",
-    customerName: "Acme Corporation",
-    customerEmail: "john@acme.com",
-    customerPhone: "+1234567890",
-    items: [
-      {
-        id: "1",
-        name: "Steel Brackets",
-        description: "Heavy duty steel brackets",
-        quantity: 100,
-        unit: "pieces",
-        pricePerUnit: 15,
-      },
-    ],
-    totalAmount: 1500,
-    status: "quotation",
-    createdAt: "2024-01-15T10:30:00Z",
-    updatedAt: "2024-01-15T10:30:00Z",
-    validUntil: "2024-02-15T10:30:00Z",
-    notes: "Bulk order discount applied",
-  },
-  {
-    id: "2",
-    quotationNumber: "QT-2024-002",
-    type: "purchase",
-    customerName: "TechStart Industries",
-    customerEmail: "sarah@techstart.com",
-    customerPhone: "+1234567891",
-    items: [
-      {
-        id: "2",
-        name: "Raw Aluminum",
-        description: "6061-T6 Aluminum sheets",
-        quantity: 50,
-        unit: "sheets",
-        pricePerUnit: 85,
-      },
-    ],
-    totalAmount: 4250,
-    status: "quotation",
-    createdAt: "2024-01-14T14:20:00Z",
-    updatedAt: "2024-01-14T14:20:00Z",
-    validUntil: "2024-02-14T14:20:00Z",
-  },
-  {
-    id: "3",
-    quotationNumber: "QT-2024-003",
-    type: "sales",
-    customerName: "BuildCo Ltd",
-    customerEmail: "mike@buildco.com",
-    customerPhone: "+1234567892",
-    items: [
-      {
-        id: "3",
-        name: "Custom Fixtures",
-        description: "Machined aluminum fixtures",
-        quantity: 25,
-        unit: "pieces",
-        pricePerUnit: 120,
-      },
-    ],
-    totalAmount: 3000,
-    status: "packing",
-    createdAt: "2024-01-13T09:15:00Z",
-    updatedAt: "2024-01-16T11:45:00Z",
-    validUntil: "2024-02-13T09:15:00Z",
-  },
-];
+interface QuotationItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productCode: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+  quantityReceived?: number;
+}
+
+interface Quotation {
+  id: string;
+  quotationNumber: string;
+  customerName: string;
+  customerEmail?: string;
+  customerPhone?: string;
+  items: QuotationItem[];
+  totalAmount: number;
+  status: "pending" | "approved" | "rejected";
+  type: "sales" | "purchase";
+  createdAt: string;
+  updatedAt: string;
+  notes?: string;
+}
 
 export default function Quotations() {
-  const [quotations, setQuotations] = useState(mockQuotations);
+  const [quotations, setQuotations] = useState<Quotation[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedQuotation, setSelectedQuotation] = useState<Quotation | null>(
     null,
   );
+  const [quantityUpdates, setQuantityUpdates] = useState<{
+    [key: string]: number;
+  }>({});
+
+  useEffect(() => {
+    fetchQuotations();
+  }, []);
+
+  const fetchQuotations = async () => {
+    try {
+      const response = await fetch("/api/quotations");
+      if (response.ok) {
+        const data = await response.json();
+        // Transform backend data to match frontend interface
+        const transformedData = data.map((quotation: any) => ({
+          id: quotation.order_id,
+          quotationNumber: quotation.order_id,
+          customerName: quotation.customerName || quotation.party_id,
+          customerEmail: quotation.customerEmail,
+          customerPhone: quotation.customerPhone,
+          items: Array.isArray(quotation.products)
+            ? quotation.products.map((product: any, index: number) => ({
+                id: index.toString(),
+                productId: product.product_code,
+                productName: product.product_name || product.name,
+                productCode: product.product_code,
+                quantity: product.quantity || product.quantity_ordered,
+                unitPrice: product.price || product.unit_price,
+                totalPrice:
+                  (product.quantity || product.quantity_ordered) *
+                  (product.price || product.unit_price),
+                quantityReceived: product.quantity_received || 0,
+              }))
+            : [],
+          totalAmount: Array.isArray(quotation.products)
+            ? quotation.products.reduce(
+                (sum: number, product: any) =>
+                  sum +
+                  (product.quantity || product.quantity_ordered) *
+                    (product.price || product.unit_price),
+                0,
+              )
+            : 0,
+          status: "pending", // Default status
+          type: quotation.type,
+          createdAt: quotation.date,
+          updatedAt: quotation.date,
+          notes: quotation.notes,
+        }));
+        setQuotations(transformedData);
+      } else {
+        console.error("Failed to fetch quotations");
+      }
+    } catch (error) {
+      console.error("Error fetching quotations:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredQuotations = quotations.filter((quotation) => {
     const matchesSearch =
@@ -109,39 +122,122 @@ export default function Quotations() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       quotation.customerName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = typeFilter === "all" || quotation.type === typeFilter;
-    const isQuotation = quotation.status === "quotation";
+    const matchesStatus =
+      statusFilter === "all" || quotation.status === statusFilter;
 
-    return matchesSearch && matchesType && isQuotation;
+    return matchesSearch && matchesStatus;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "quotation":
-        return "default";
-      case "current":
-        return "secondary";
-      case "completed":
-        return "outline";
-      default:
-        return "default";
+  const moveToOrders = async (quotationId: string) => {
+    try {
+      const response = await fetch("/api/quotations/update-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          order_id: quotationId,
+          status: "packing",
+        }),
+      });
+
+      if (response.ok) {
+        await fetchQuotations(); // Refresh the list
+        setSelectedQuotation(null);
+      } else {
+        const error = await response.json();
+        alert(`Failed to move to orders: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error moving quotation to orders:", error);
+      alert("Failed to move quotation to orders");
     }
   };
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case "sales":
-        return "bg-green-100 text-green-800";
-      case "purchase":
-        return "bg-blue-100 text-blue-800";
+  const updatePurchaseQuantities = async (quotationId: string) => {
+    try {
+      const updatedProducts = Object.entries(quantityUpdates).map(
+        ([productCode, quantity]) => ({
+          product_code: productCode,
+          quantity_received: quantity,
+        }),
+      );
+
+      const response = await fetch("/api/quotations/update-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          order_id: quotationId,
+          updated_products: updatedProducts,
+        }),
+      });
+
+      if (response.ok) {
+        await fetchQuotations(); // Refresh the list
+        setSelectedQuotation(null);
+        setQuantityUpdates({});
+      } else {
+        const error = await response.json();
+        alert(`Failed to update purchase: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error updating purchase:", error);
+      alert("Failed to update purchase");
+    }
+  };
+
+  const completePurchase = async (quotationId: string) => {
+    try {
+      const response = await fetch("/api/quotations/update-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          order_id: quotationId,
+          status: "completed",
+        }),
+      });
+
+      if (response.ok) {
+        await fetchQuotations(); // Refresh the list
+        setSelectedQuotation(null);
+      } else {
+        const error = await response.json();
+        alert(`Failed to complete purchase: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error completing purchase:", error);
+      alert("Failed to complete purchase");
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "pending":
+        return "default";
+      case "approved":
+        return "secondary";
+      case "rejected":
+        return "destructive";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "outline";
     }
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading quotations...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -170,14 +266,15 @@ export default function Quotations() {
               />
             </div>
 
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-40">
-                <SelectValue placeholder="Type" />
+                <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                <SelectItem value="sales">Sales</SelectItem>
-                <SelectItem value="purchase">Purchase</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="approved">Approved</SelectItem>
+                <SelectItem value="rejected">Rejected</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -206,12 +303,30 @@ export default function Quotations() {
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <Badge className={getTypeColor(quotation.type)}>
-                    {quotation.type}
-                  </Badge>
                   <Badge variant={getStatusColor(quotation.status)}>
                     {quotation.status}
                   </Badge>
+                  {quotation.status === "pending" &&
+                    quotation.type === "sales" && (
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          moveToOrders(quotation.id);
+                        }}
+                      >
+                        Move to Packing
+                        <ArrowRight className="h-4 w-4 ml-1" />
+                      </Button>
+                    )}
+                  {quotation.type === "purchase" && (
+                    <Badge
+                      variant="outline"
+                      className="bg-orange-50 text-orange-700"
+                    >
+                      Purchase Order
+                    </Badge>
+                  )}
                 </div>
               </div>
 
@@ -221,8 +336,8 @@ export default function Quotations() {
                   Created: {formatDate(quotation.createdAt)}
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Valid Until: {formatDate(quotation.validUntil)}
+                  <Package className="h-4 w-4 mr-2" />
+                  Items: {quotation.items.length}
                 </div>
                 <div className="flex items-center text-sm font-medium">
                   <DollarSign className="h-4 w-4 mr-2" />$
@@ -300,30 +415,90 @@ export default function Quotations() {
 
               {/* Items */}
               <div>
-                <h4 className="font-semibold mb-2">Items</h4>
-                <div className="space-y-2">
-                  {selectedQuotation.items.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex justify-between items-center p-3 bg-gray-50 rounded"
-                    >
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-gray-600">
-                          {item.description}
-                        </p>
+                <h4 className="font-semibold mb-2">
+                  {selectedQuotation.type === "purchase"
+                    ? "Purchase Items"
+                    : "Items"}
+                </h4>
+                {selectedQuotation.type === "purchase" ? (
+                  <div className="space-y-2">
+                    {selectedQuotation.items.map((item, index) => (
+                      <div
+                        key={item.id}
+                        className="p-3 bg-gray-50 rounded border"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-medium">{item.productName}</p>
+                            <p className="text-sm text-gray-600">
+                              Code: {item.productCode}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm text-gray-600">
+                              ${item.unitPrice.toFixed(2)} per unit
+                            </p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2 text-sm mb-2">
+                          <div>
+                            <span className="text-gray-600">Ordered:</span>{" "}
+                            {item.quantity}
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Received:</span>{" "}
+                            {item.quantityReceived || 0}
+                          </div>
+                          <div>
+                            <span className="text-gray-600">Pending:</span>{" "}
+                            {item.quantity - (item.quantityReceived || 0)}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <label className="text-sm text-gray-600">
+                            Receive Qty:
+                          </label>
+                          <Input
+                            type="number"
+                            min="0"
+                            max={item.quantity - (item.quantityReceived || 0)}
+                            value={quantityUpdates[item.productCode] || 0}
+                            onChange={(e) =>
+                              setQuantityUpdates((prev) => ({
+                                ...prev,
+                                [item.productCode]:
+                                  parseInt(e.target.value) || 0,
+                              }))
+                            }
+                            className="w-20 h-8"
+                          />
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium">
-                          {item.quantity} {item.unit}
-                        </p>
-                        <p className="text-sm text-gray-600">
-                          ${item.pricePerUnit} per {item.unit}
-                        </p>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {selectedQuotation.items.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      >
+                        <div>
+                          <p className="font-medium">{item.productName}</p>
+                          <p className="text-sm text-gray-600">
+                            Code: {item.productCode}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">{item.quantity} units</p>
+                          <p className="text-sm text-gray-600">
+                            ${item.unitPrice.toFixed(2)} per unit
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Total */}
@@ -336,18 +511,49 @@ export default function Quotations() {
 
               {/* Actions */}
               <div className="flex gap-2 pt-4">
-                {selectedQuotation.status === "quotation" && (
-                  <>
-                    <Button className="flex-1">Convert to Order</Button>
-                    <Button variant="outline" className="flex-1">
-                      Edit Quotation
+                {selectedQuotation.type === "sales" &&
+                  selectedQuotation.status === "pending" && (
+                    <Button
+                      className="flex-1"
+                      onClick={() => moveToOrders(selectedQuotation.id)}
+                    >
+                      Move to Packing
+                      <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
-                  </>
-                )}
-                {selectedQuotation.type === "purchase" &&
-                  selectedQuotation.status === "packing" && (
-                    <Button className="flex-1">Mark as Received</Button>
                   )}
+                {selectedQuotation.type === "purchase" &&
+                  selectedQuotation.status === "pending" && (
+                    <>
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        disabled={
+                          Object.keys(quantityUpdates).length === 0 ||
+                          Object.values(quantityUpdates).every(
+                            (qty) => qty === 0,
+                          )
+                        }
+                        onClick={() =>
+                          updatePurchaseQuantities(selectedQuotation.id)
+                        }
+                      >
+                        Submit Partial
+                      </Button>
+                      <Button
+                        className="flex-1"
+                        onClick={() => completePurchase(selectedQuotation.id)}
+                      >
+                        Complete Purchase
+                      </Button>
+                    </>
+                  )}
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setSelectedQuotation(null)}
+                >
+                  Close
+                </Button>
               </div>
             </CardContent>
           </Card>

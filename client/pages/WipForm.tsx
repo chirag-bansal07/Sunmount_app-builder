@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,70 +21,86 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Trash2, Save, ArrowLeft } from "lucide-react";
-import type { RawMaterial, Product, WorkInProgress } from "@shared/api";
 
-// Mock data for orders that can be added to WIP
-const availableOrders = [
-  {
-    id: "1",
-    orderNumber: "ORD-2024-001",
-    customerName: "Global Manufacturing Co.",
-  },
-  { id: "2", orderNumber: "ORD-2024-002", customerName: "Metro Industries" },
-  {
-    id: "3",
-    orderNumber: "ORD-2024-003",
-    customerName: "TechStart Industries",
-  },
-];
+interface Product {
+  id: string;
+  code: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  unit: string;
+  isRawMaterial: boolean;
+}
 
-// Mock data for available raw materials
-const availableRawMaterials = [
-  { id: "1", name: "Steel Sheet", unit: "kg", costPerUnit: 2.5 },
-  { id: "2", name: "Aluminum Rod", unit: "pieces", costPerUnit: 12 },
-  { id: "3", name: "Stainless Steel Bolts", unit: "pieces", costPerUnit: 0.15 },
-  { id: "4", name: "Cutting Fluid", unit: "liters", costPerUnit: 15 },
-  { id: "5", name: "Aluminum Sheet", unit: "sheets", costPerUnit: 45 },
-];
+interface RawMaterial {
+  id: string;
+  productId: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  costPerUnit: number;
+}
 
-// Mock data for product templates
-const productTemplates = [
-  {
-    id: "1",
-    name: "Steel Brackets",
-    description: "Heavy duty steel brackets",
-    unit: "pieces",
-    pricePerUnit: 15,
-  },
-  {
-    id: "2",
-    name: "Custom Fixtures",
-    description: "Machined aluminum fixtures",
-    unit: "pieces",
-    pricePerUnit: 120,
-  },
-  {
-    id: "3",
-    name: "Electronic Enclosures",
-    description: "Weatherproof aluminum enclosures",
-    unit: "pieces",
-    pricePerUnit: 85,
-  },
-];
+interface ExpectedProduct {
+  id: string;
+  productId: string;
+  name: string;
+  description: string;
+  quantity: number;
+  unit: string;
+  pricePerUnit: number;
+}
 
 export default function WipForm() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    batchNumber: `BATCH-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 1000)).padStart(3, "0")}`,
-    orderId: "",
-    orderNumber: "",
+    batchNumber: `WIP-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, "0")}${new Date().getDate().toString().padStart(2, "0")}-${new Date().getHours().toString().padStart(2, "0")}${new Date().getMinutes().toString().padStart(2, "0")}`,
     startDate: new Date().toISOString().split("T")[0],
     expectedEndDate: "",
     notes: "",
   });
 
+  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
   const [rawMaterials, setRawMaterials] = useState<RawMaterial[]>([]);
-  const [expectedOutput, setExpectedOutput] = useState<Product[]>([]);
+  const [expectedOutput, setExpectedOutput] = useState<ExpectedProduct[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch("/api/inventory");
+      if (response.ok) {
+        const data = await response.json();
+        // Transform backend data to match frontend interface
+        const transformedData = data.map((product: any) => ({
+          id: product.product_code,
+          code: product.product_code,
+          name: product.name,
+          quantity: product.quantity,
+          unitPrice: product.price,
+          unit: "units",
+          isRawMaterial: true, // For now, treat all as raw materials
+        }));
+        setAvailableProducts(transformedData);
+      } else {
+        console.error("Failed to fetch products");
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const availableRawMaterials = availableProducts.filter(
+    (p) => p.isRawMaterial,
+  );
+  const availableFinishedProducts = availableProducts.filter(
+    (p) => !p.isRawMaterial,
+  );
 
   // Handle form field changes
   const handleFormChange = (field: string, value: string) => {
@@ -92,17 +108,6 @@ export default function WipForm() {
       ...prev,
       [field]: value,
     }));
-
-    // Auto-fill order number when order is selected
-    if (field === "orderId") {
-      const selectedOrder = availableOrders.find((order) => order.id === value);
-      if (selectedOrder) {
-        setFormData((prev) => ({
-          ...prev,
-          orderNumber: selectedOrder.orderNumber,
-        }));
-      }
-    }
   };
 
   // Raw Materials Functions
@@ -111,6 +116,7 @@ export default function WipForm() {
       ...prev,
       {
         id: `temp-${Date.now()}`,
+        productId: "",
         name: "",
         quantity: 0,
         unit: "",
@@ -133,12 +139,13 @@ export default function WipForm() {
     setRawMaterials((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const selectRawMaterial = (index: number, materialId: string) => {
-    const material = availableRawMaterials.find((m) => m.id === materialId);
-    if (material) {
-      updateRawMaterial(index, "name", material.name);
-      updateRawMaterial(index, "unit", material.unit);
-      updateRawMaterial(index, "costPerUnit", material.costPerUnit);
+  const selectRawMaterial = (index: number, productId: string) => {
+    const product = availableRawMaterials.find((p) => p.id === productId);
+    if (product) {
+      updateRawMaterial(index, "productId", productId);
+      updateRawMaterial(index, "name", product.name);
+      updateRawMaterial(index, "unit", product.unit);
+      updateRawMaterial(index, "costPerUnit", product.unitPrice);
     }
   };
 
@@ -148,6 +155,7 @@ export default function WipForm() {
       ...prev,
       {
         id: `temp-${Date.now()}`,
+        productId: "",
         name: "",
         description: "",
         quantity: 0,
@@ -159,7 +167,7 @@ export default function WipForm() {
 
   const updateExpectedOutput = (
     index: number,
-    field: keyof Product,
+    field: keyof ExpectedProduct,
     value: string | number,
   ) => {
     setExpectedOutput((prev) =>
@@ -172,12 +180,13 @@ export default function WipForm() {
   };
 
   const selectProduct = (index: number, productId: string) => {
-    const product = productTemplates.find((p) => p.id === productId);
+    const product = availableFinishedProducts.find((p) => p.id === productId);
     if (product) {
+      updateExpectedOutput(index, "productId", productId);
       updateExpectedOutput(index, "name", product.name);
-      updateExpectedOutput(index, "description", product.description);
+      updateExpectedOutput(index, "description", product.name);
       updateExpectedOutput(index, "unit", product.unit);
-      updateExpectedOutput(index, "pricePerUnit", product.pricePerUnit);
+      updateExpectedOutput(index, "pricePerUnit", product.unitPrice);
     }
   };
 
@@ -193,27 +202,68 @@ export default function WipForm() {
   );
 
   // Handle form submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const wipData: Partial<WorkInProgress> = {
-      batchNumber: formData.batchNumber,
-      orderId: formData.orderId,
-      orderNumber: formData.orderNumber,
-      rawMaterialsUsed: rawMaterials,
-      expectedOutput: expectedOutput,
-      startDate: new Date(formData.startDate).toISOString(),
-      expectedEndDate: new Date(formData.expectedEndDate).toISOString(),
-      status: "planned",
-      notes: formData.notes,
-    };
+    if (!formData.batchNumber || rawMaterials.length === 0) {
+      alert("Please fill in batch number and add at least one raw material");
+      return;
+    }
 
-    // In a real app, this would be an API call
-    console.log("Creating WIP:", wipData);
+    try {
+      const wipData = {
+        batch_number: formData.batchNumber,
+        raw_materials: rawMaterials
+          .filter((m) => m.productId && m.quantity > 0)
+          .map((m) => ({
+            product_code:
+              availableProducts.find((p) => p.id === m.productId)?.code ||
+              m.productId,
+            quantity: m.quantity,
+          })),
+        output: expectedOutput
+          .filter((p) => p.productId && p.quantity > 0)
+          .map((p) => ({
+            product_code:
+              availableProducts.find((prod) => prod.id === p.productId)?.code ||
+              p.productId,
+            quantity: p.quantity,
+          })),
+        product_code: rawMaterials[0]?.productId
+          ? availableProducts.find((p) => p.id === rawMaterials[0].productId)
+              ?.code || rawMaterials[0].productId
+          : "WIP",
+        status: "in_progress",
+        start_date: new Date(formData.startDate).toISOString(),
+      };
 
-    // Navigate back to WIP list
-    navigate("/work-in-progress");
+      const response = await fetch("/api/wip", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(wipData),
+      });
+
+      if (response.ok) {
+        navigate("/work-in-progress");
+      } else {
+        const error = await response.json();
+        alert(`Failed to create WIP batch: ${error.error}`);
+      }
+    } catch (error) {
+      console.error("Error creating WIP batch:", error);
+      alert("Failed to create WIP batch");
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg">Loading products...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -223,9 +273,7 @@ export default function WipForm() {
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to WIP
         </Button>
-        <h1 className="text-3xl font-bold text-gray-900">
-          Add to Work in Progress
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900">Create WIP Batch</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -248,25 +296,6 @@ export default function WipForm() {
                 />
               </div>
               <div>
-                <Label htmlFor="orderId">Related Order</Label>
-                <Select
-                  value={formData.orderId}
-                  onValueChange={(value) => handleFormChange("orderId", value)}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an order" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableOrders.map((order) => (
-                      <SelectItem key={order.id} value={order.id}>
-                        {order.orderNumber} - {order.customerName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
                 <Label htmlFor="startDate">Start Date</Label>
                 <Input
                   id="startDate"
@@ -287,7 +316,6 @@ export default function WipForm() {
                   onChange={(e) =>
                     handleFormChange("expectedEndDate", e.target.value)
                   }
-                  required
                 />
               </div>
             </div>
@@ -334,24 +362,18 @@ export default function WipForm() {
                       <TableRow key={index}>
                         <TableCell>
                           <Select
-                            value={material.name}
+                            value={material.productId}
                             onValueChange={(value) => {
-                              const selectedMaterial =
-                                availableRawMaterials.find(
-                                  (m) => m.name === value,
-                                );
-                              if (selectedMaterial) {
-                                selectRawMaterial(index, selectedMaterial.id);
-                              }
+                              selectRawMaterial(index, value);
                             }}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select material" />
                             </SelectTrigger>
                             <SelectContent>
-                              {availableRawMaterials.map((mat) => (
-                                <SelectItem key={mat.id} value={mat.name}>
-                                  {mat.name}
+                              {availableRawMaterials.map((product) => (
+                                <SelectItem key={product.id} value={product.id}>
+                                  {product.name} ({product.code})
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -463,23 +485,18 @@ export default function WipForm() {
                       <TableRow key={index}>
                         <TableCell>
                           <Select
-                            value={product.name}
+                            value={product.productId}
                             onValueChange={(value) => {
-                              const selectedProduct = productTemplates.find(
-                                (p) => p.name === value,
-                              );
-                              if (selectedProduct) {
-                                selectProduct(index, selectedProduct.id);
-                              }
+                              selectProduct(index, value);
                             }}
                           >
                             <SelectTrigger>
                               <SelectValue placeholder="Select product" />
                             </SelectTrigger>
                             <SelectContent>
-                              {productTemplates.map((prod) => (
-                                <SelectItem key={prod.id} value={prod.name}>
-                                  {prod.name}
+                              {availableFinishedProducts.map((prod) => (
+                                <SelectItem key={prod.id} value={prod.id}>
+                                  {prod.name} ({prod.code})
                                 </SelectItem>
                               ))}
                             </SelectContent>
