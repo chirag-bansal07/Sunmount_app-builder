@@ -479,7 +479,12 @@ export default function CustomersSuppliers() {
 
               {/* Actions */}
               <div className="flex gap-2 pt-4">
-                <Button className="flex-1">Edit</Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => handleEdit(selectedContact)}
+                >
+                  Edit
+                </Button>
                 <Button variant="outline" className="flex-1">
                   View{" "}
                   {selectedContact.type === "customer" ? "Orders" : "Purchases"}
