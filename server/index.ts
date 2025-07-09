@@ -17,6 +17,12 @@ import {
   deleteProductHandler,
   adjustInventoryHandler,
 } from "./routes/products-simple";
+import {
+  getCustomersHandler,
+  createCustomerHandler,
+  getSuppliersHandler,
+  createSupplierHandler,
+} from "./routes/customers";
 
 export function createServer() {
   const app = express();
