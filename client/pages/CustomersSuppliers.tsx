@@ -145,6 +145,17 @@ export default function CustomersSuppliers() {
     ));
   };
 
+  const handleSave = (data: Partial<Customer> | Partial<Supplier>) => {
+    if (activeTab === "customers") {
+      const newCustomer = data as Customer;
+      setCustomers((prev) => [...prev, newCustomer]);
+    } else {
+      const newSupplier = data as Supplier;
+      setSuppliers((prev) => [...prev, newSupplier]);
+    }
+    setShowForm(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
