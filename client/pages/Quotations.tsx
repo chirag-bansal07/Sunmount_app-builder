@@ -109,11 +109,10 @@ export default function Quotations() {
         .toLowerCase()
         .includes(searchTerm.toLowerCase()) ||
       quotation.customerName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === "all" || quotation.status === statusFilter;
     const matchesType = typeFilter === "all" || quotation.type === typeFilter;
+    const isQuotation = quotation.status === "quotation";
 
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesType && isQuotation;
   });
 
   const getStatusColor = (status: string) => {
