@@ -29,7 +29,7 @@ model WorkInProgress {
   end_date      DateTime?
 
   product_code  String
-  product       Product  @relation("ProductToWIP", fields: [product_code], references: [product_code])
+  product       Product?  @relation("ProductToWIP", fields: [product_code], references: [product_code])
 }
 
 

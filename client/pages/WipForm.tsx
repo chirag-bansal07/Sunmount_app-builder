@@ -26,6 +26,7 @@ interface Product {
   id: string;
   code: string;
   name: string;
+  description: string;
   quantity: number;
   unitPrice: number;
   unit: string;
@@ -79,10 +80,10 @@ export default function WipForm() {
           id: product.product_code,
           code: product.product_code,
           name: product.name,
+          description: product.description || "",
           quantity: product.quantity,
           unitPrice: product.price,
           unit: "units",
-          isRawMaterial: true, // For now, treat all as raw materials
         }));
         setAvailableProducts(transformedData);
       } else {
@@ -94,13 +95,8 @@ export default function WipForm() {
       setLoading(false);
     }
   };
+  const allInventory = availableProducts;
 
-  const availableRawMaterials = availableProducts.filter(
-    (p) => p.isRawMaterial,
-  );
-  const availableFinishedProducts = availableProducts.filter(
-    (p) => !p.isRawMaterial,
-  );
 
   // Handle form field changes
   const handleFormChange = (field: string, value: string) => {
@@ -140,7 +136,7 @@ export default function WipForm() {
   };
 
   const selectRawMaterial = (index: number, productId: string) => {
-    const product = availableRawMaterials.find((p) => p.id === productId);
+    const product = availableProducts.find((p) => p.id === productId);
     if (product) {
       updateRawMaterial(index, "productId", productId);
       updateRawMaterial(index, "name", product.name);
@@ -180,11 +176,11 @@ export default function WipForm() {
   };
 
   const selectProduct = (index: number, productId: string) => {
-    const product = availableFinishedProducts.find((p) => p.id === productId);
+    const product = availableProducts.find((p) => p.id === productId);
     if (product) {
       updateExpectedOutput(index, "productId", productId);
       updateExpectedOutput(index, "name", product.name);
-      updateExpectedOutput(index, "description", product.name);
+      updateExpectedOutput(index, "description", product.description);
       updateExpectedOutput(index, "unit", product.unit);
       updateExpectedOutput(index, "pricePerUnit", product.unitPrice);
     }
@@ -371,11 +367,12 @@ export default function WipForm() {
                               <SelectValue placeholder="Select material" />
                             </SelectTrigger>
                             <SelectContent>
-                              {availableRawMaterials.map((product) => (
-                                <SelectItem key={product.id} value={product.id}>
-                                  {product.name} ({product.code})
-                                </SelectItem>
-                              ))}
+                              {allInventory.map((product) => (
+                                  <SelectItem key={product.id} value={product.id}>
+                                    {product.name} ({product.code})
+                                  </SelectItem>
+                                ))
+                              }
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -494,11 +491,13 @@ export default function WipForm() {
                               <SelectValue placeholder="Select product" />
                             </SelectTrigger>
                             <SelectContent>
-                              {availableFinishedProducts.map((prod) => (
-                                <SelectItem key={prod.id} value={prod.id}>
-                                  {prod.name} ({prod.code})
+                              {allInventory.map((product) => (
+                                <SelectItem key={product.id} value={product.id}>
+                                  {product.name} ({product.code})
                                 </SelectItem>
-                              ))}
+                                ))
+                              }
+
                             </SelectContent>
                           </Select>
                         </TableCell>
