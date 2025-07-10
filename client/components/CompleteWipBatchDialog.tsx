@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { dashboardEvents } from "@/lib/dashboard-events";
 
 interface Product {
   id: string;
@@ -97,6 +98,8 @@ export function CompleteWipBatchDialog({
       if (updateResponse.ok) {
         onSuccess();
         onOpenChange(false);
+        // Trigger dashboard refresh
+        dashboardEvents.refreshDashboard();
       } else {
         const error = await updateResponse.json();
         console.error("Failed to complete WIP batch:", error);
