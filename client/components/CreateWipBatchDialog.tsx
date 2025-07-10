@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import { ProductLookup } from "@/components/ProductLookup";
+import { dashboardEvents } from "@/lib/dashboard-events";
 
 interface Product {
   id: string;
@@ -160,6 +161,8 @@ export function CreateWipBatchDialog({
         setNotes("");
         setMaterials([]);
         setOutputProducts([]);
+        // Trigger dashboard refresh
+        dashboardEvents.refreshDashboard();
       } else {
         const error = await response.json();
         console.error("Failed to create WIP batch:", error);
