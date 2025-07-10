@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -6,7 +6,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus, Trash2 } from "lucide-react";
+import { ProductLookup } from "@/components/ProductLookup";
 
 interface Product {
   id: string;
@@ -29,6 +33,13 @@ interface WipBatch {
   status: string;
 }
 
+interface OutputProduct {
+  product_code: string;
+  product_name: string;
+  quantity: number;
+  unit: string;
+}
+
 interface CompleteWipBatchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,12 +54,45 @@ export function CompleteWipBatchDialog({
   onSuccess,
 }: CompleteWipBatchDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [outputProducts, setOutputProducts] = useState<OutputProduct[]>([]);
+
+  const addOutputProduct = (product: any) => {
+    const existingProduct = outputProducts.find(
+      (p) => p.product_code === product.code,
+    );
+    if (existingProduct) {
+      return; // Product already added
+    }
+
+    const newOutput: OutputProduct = {
+      product_code: product.code,
+      product_name: product.name,
+      quantity: 0,
+      unit: product.unit || "units",
+    };
+
+    setOutputProducts([...outputProducts, newOutput]);
+  };
+
+  const updateOutputQuantity = (product_code: string, quantity: number) => {
+    setOutputProducts(
+      outputProducts.map((p) =>
+        p.product_code === product_code ? { ...p, quantity } : p,
+      ),
+    );
+  };
+
+  const removeOutputProduct = (product_code: string) => {
+    setOutputProducts(
+      outputProducts.filter((p) => p.product_code !== product_code),
+    );
+  };
 
   const handleSubmit = async () => {
     setLoading(true);
 
     try {
-      // Mark the batch as completed
+      // Update the batch to include output products and mark as completed
       const updateResponse = await fetch(`/api/wip/${batch.batchNumber}`, {
         method: "PUT",
         headers: {
@@ -57,6 +101,10 @@ export function CompleteWipBatchDialog({
         body: JSON.stringify({
           status: "completed",
           end_date: new Date().toISOString(),
+          output: outputProducts.map((p) => ({
+            product_code: p.product_code,
+            quantity: p.quantity,
+          })),
         }),
       });
 
@@ -104,31 +152,65 @@ export function CompleteWipBatchDialog({
           </CardContent>
         </Card>
 
-        {/* Expected Outputs (read-only) */}
-        {batch.outputs && batch.outputs.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Expected Outputs</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Output Products</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <ProductLookup
+              onProductSelect={addOutputProduct}
+              placeholder="Add output product by code..."
+              filterRawMaterials={false}
+            />
+
+            {outputProducts.length > 0 && (
               <div className="space-y-2">
-                {batch.outputs.map((output, index) => (
+                {outputProducts.map((product) => (
                   <div
-                    key={index}
-                    className="flex justify-between items-center p-2 bg-green-50 rounded-md"
+                    key={product.product_code}
+                    className="flex items-center space-x-2 p-3 border rounded-md"
                   >
-                    <span className="font-medium">
-                      {output.product?.name || output.product?.code}
-                    </span>
-                    <span>
-                      {output.quantity} {output.product?.unit || "units"}
-                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium">{product.product_name}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Code: {product.product_code}
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={product.quantity}
+                        onChange={(e) =>
+                          updateOutputQuantity(
+                            product.product_code,
+                            parseFloat(e.target.value) || 0,
+                          )
+                        }
+                        className="w-24"
+                        placeholder="Qty"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        {product.unit}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          removeOutputProduct(product.product_code)
+                        }
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            )}
+          </CardContent>
+        </Card>
 
         <div className="flex justify-end space-x-2">
           <Button
@@ -140,7 +222,14 @@ export function CompleteWipBatchDialog({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              loading ||
+              outputProducts.length === 0 ||
+              outputProducts.some((p) => p.quantity <= 0)
+            }
+          >
             {loading ? "Completing..." : "Complete Batch"}
           </Button>
         </div>
