@@ -200,7 +200,6 @@ export default function Inventory() {
                   <TableHead>Quantity</TableHead>
                   <TableHead>Unit Price</TableHead>
                   <TableHead>Total Value</TableHead>
-                  <TableHead>Type</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
