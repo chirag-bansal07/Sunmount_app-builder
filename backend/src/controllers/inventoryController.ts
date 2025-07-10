@@ -5,10 +5,15 @@ const prisma = new PrismaClient();
 
 export const getInventory = async (req: Request, res: Response) => {
   try {
+    console.log("Fetching inventory...");
     const inventory = await prisma.product.findMany();
+    console.log("Inventory fetched:", inventory.length, "items");
     res.json(inventory);
   } catch (error: any) {
-    res.status(500).json({ error: "Failed to fetch inventory" });
+    console.error("Inventory fetch error:", error);
+    res
+      .status(500)
+      .json({ error: "Failed to fetch inventory: " + error.message });
   }
 };
 
