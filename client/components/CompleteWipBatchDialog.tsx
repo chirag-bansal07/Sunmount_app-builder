@@ -161,15 +161,17 @@ export function CompleteWipBatchDialog({
                     <div className="flex items-center space-x-2">
                       <Input
                         type="number"
-                        min="0"
+                        min="0.01"
                         step="0.01"
-                        value={product.quantity}
-                        onChange={(e) =>
+                        value={product.quantity || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const numValue = parseFloat(value);
                           updateOutputQuantity(
                             product.product_code,
-                            parseFloat(e.target.value) || 0,
-                          )
-                        }
+                            isNaN(numValue) || numValue <= 0 ? 0 : numValue,
+                          );
+                        }}
                         className="w-24"
                         placeholder="Actual Qty"
                       />
