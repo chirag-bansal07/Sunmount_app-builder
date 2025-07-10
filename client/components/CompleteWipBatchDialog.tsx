@@ -7,10 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
-import { ProductLookup } from "@/components/ProductLookup";
 
 interface Product {
   id: string;
@@ -35,9 +32,8 @@ interface WipBatch {
 
 interface OutputProduct {
   product_code: string;
-  product_name: string;
   quantity: number;
-  unit: string;
+  expected_quantity?: number;
 }
 
 interface CompleteWipBatchDialogProps {
@@ -56,35 +52,25 @@ export function CompleteWipBatchDialog({
   const [loading, setLoading] = useState(false);
   const [outputProducts, setOutputProducts] = useState<OutputProduct[]>([]);
 
-  const addOutputProduct = (product: any) => {
-    const existingProduct = outputProducts.find(
-      (p) => p.product_code === product.code,
-    );
-    if (existingProduct) {
-      return; // Product already added
+  useEffect(() => {
+    if (open && batch) {
+      // Load predefined output products from the batch
+      const predefinedOutputs = batch.outputs || [];
+      setOutputProducts(
+        predefinedOutputs.map((output: any) => ({
+          product_code: output.product_code,
+          quantity: output.quantity || 0,
+          expected_quantity: output.expected_quantity || 0,
+        })),
+      );
     }
-
-    const newOutput: OutputProduct = {
-      product_code: product.code,
-      product_name: product.name,
-      quantity: 0,
-      unit: product.unit || "units",
-    };
-
-    setOutputProducts([...outputProducts, newOutput]);
-  };
+  }, [open, batch]);
 
   const updateOutputQuantity = (product_code: string, quantity: number) => {
     setOutputProducts(
       outputProducts.map((p) =>
         p.product_code === product_code ? { ...p, quantity } : p,
       ),
-    );
-  };
-
-  const removeOutputProduct = (product_code: string) => {
-    setOutputProducts(
-      outputProducts.filter((p) => p.product_code !== product_code),
     );
   };
 
@@ -156,14 +142,8 @@ export function CompleteWipBatchDialog({
           <CardHeader>
             <CardTitle className="text-lg">Output Products</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <ProductLookup
-              onProductSelect={addOutputProduct}
-              placeholder="Add output product by code..."
-              filterRawMaterials={false}
-            />
-
-            {outputProducts.length > 0 && (
+          <CardContent>
+            {outputProducts.length > 0 ? (
               <div className="space-y-2">
                 {outputProducts.map((product) => (
                   <div
@@ -171,10 +151,12 @@ export function CompleteWipBatchDialog({
                     className="flex items-center space-x-2 p-3 border rounded-md"
                   >
                     <div className="flex-1">
-                      <div className="font-medium">{product.product_name}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Code: {product.product_code}
-                      </div>
+                      <div className="font-medium">{product.product_code}</div>
+                      {product.expected_quantity && (
+                        <div className="text-sm text-muted-foreground">
+                          Expected: {product.expected_quantity} units
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center space-x-2">
                       <Input
@@ -189,24 +171,18 @@ export function CompleteWipBatchDialog({
                           )
                         }
                         className="w-24"
-                        placeholder="Qty"
+                        placeholder="Actual Qty"
                       />
                       <span className="text-sm text-muted-foreground">
-                        {product.unit}
+                        units
                       </span>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          removeOutputProduct(product.product_code)
-                        }
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : (
+              <div className="text-sm text-muted-foreground p-4 text-center">
+                No output products defined for this batch.
               </div>
             )}
           </CardContent>
