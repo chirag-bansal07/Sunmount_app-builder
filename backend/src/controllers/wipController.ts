@@ -96,13 +96,19 @@ export const updateBatch = async (req: Request, res: Response) => {
 
   try {
     const updatedBatch = await prisma.$transaction(async (tx) => {
-      // Step 1: Update the batch status and end date
+      // Step 1: Update the batch status, end date, and output if provided
+      const updateData: any = {
+        status,
+        end_date: end_date ? new Date(end_date) : new Date(),
+      };
+
+      if (output) {
+        updateData.output = output;
+      }
+
       const batch = await tx.workInProgress.update({
         where: { batch_number },
-        data: {
-          status,
-          end_date: end_date ? new Date(end_date) : new Date(),
-        },
+        data: updateData,
       });
 
       // Step 2: If completing the batch, update inventory
