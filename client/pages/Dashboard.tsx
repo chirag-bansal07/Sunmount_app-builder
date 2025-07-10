@@ -12,7 +12,9 @@ import {
   TrendingUp,
   AlertTriangle,
   Package,
+  RefreshCw,
 } from "lucide-react";
+import { dashboardEvents } from "@/lib/dashboard-events";
 
 interface DashboardStats {
   totalProducts: number;
@@ -54,6 +56,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+
+    // Listen for dashboard refresh events
+    const cleanup = dashboardEvents.addListener(() => {
+      fetchDashboardData();
+    });
+
+    return cleanup;
   }, []);
 
   const fetchDashboardData = async () => {
