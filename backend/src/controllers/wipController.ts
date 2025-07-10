@@ -123,9 +123,16 @@ export const updateBatch = async (req: Request, res: Response) => {
           if (
             !item ||
             typeof item.product_code !== "string" ||
-            typeof item.quantity !== "number"
+            typeof item.quantity !== "number" ||
+            isNaN(item.quantity)
           ) {
             throw new Error(`Invalid output item: ${JSON.stringify(item)}`);
+          }
+
+          if (item.quantity <= 0) {
+            throw new Error(
+              `Output quantity must be positive for '${item.product_code}': ${item.quantity}`,
+            );
           }
 
           const product = await tx.product.findUnique({
