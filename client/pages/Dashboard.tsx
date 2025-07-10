@@ -59,31 +59,57 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       const [inventoryResponse, wipResponse] = await Promise.all([
-        fetch("/api/inventory-report"),
-        fetch("/api/wip-batches"),
+        fetch("/api/inventory"),
+        fetch("/api/wip"),
       ]);
 
       if (inventoryResponse.ok && wipResponse.ok) {
         const inventoryData = await inventoryResponse.json();
         const wipData = await wipResponse.json();
 
-        const lowStock = inventoryData.products.filter(
+        // Transform inventory data to match expected interface
+        const transformedInventory = inventoryData.map((item: any) => ({
+          id: item.product_code,
+          code: item.product_code,
+          name: item.name,
+          quantity: item.quantity,
+          unitPrice: item.price,
+          unit: "units",
+          isRawMaterial: item.product_code.startsWith("RM"),
+        }));
+
+        const lowStock = transformedInventory.filter(
           (product: Product) => product.quantity < 10,
         );
 
+        const totalInventoryValue = transformedInventory.reduce(
+          (total: number, product: Product) =>
+            total + product.quantity * product.unitPrice,
+          0,
+        );
+
+        // Transform WIP data
+        const transformedWip = wipData.map((batch: any) => ({
+          id: batch.id.toString(),
+          batchNumber: batch.batch_number,
+          status: batch.status.toUpperCase(),
+          startDate: batch.start_date,
+          endDate: batch.end_date,
+        }));
+
         setStats({
-          totalProducts: inventoryData.summary.totalProducts,
-          totalInventoryValue: inventoryData.summary.totalInventoryValue,
+          totalProducts: transformedInventory.length,
+          totalInventoryValue: totalInventoryValue,
           lowStockItems: lowStock.length,
-          wipBatches: wipData.filter(
+          wipBatches: transformedWip.filter(
             (batch: WipBatch) => batch.status === "IN_PROGRESS",
           ).length,
-          rawMaterials: inventoryData.products.filter(
+          rawMaterials: transformedInventory.filter(
             (product: Product) => product.isRawMaterial,
           ).length,
         });
 
-        setRecentWipBatches(wipData.slice(0, 3));
+        setRecentWipBatches(transformedWip.slice(0, 3));
         setLowStockProducts(lowStock.slice(0, 5));
       }
     } catch (error) {
