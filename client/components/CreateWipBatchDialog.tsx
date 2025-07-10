@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import { ProductLookup } from "@/components/ProductLookup";
+import { dashboardEvents } from "@/lib/dashboard-events";
 
 interface Product {
   id: string;
@@ -31,6 +32,14 @@ interface Material {
   quantity: number;
 }
 
+interface OutputProduct {
+  productId: string;
+  productCode: string;
+  productName: string;
+  unit: string;
+  expectedQuantity: number;
+}
+
 interface CreateWipBatchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -45,6 +54,7 @@ export function CreateWipBatchDialog({
   const [batchNumber, setBatchNumber] = useState("");
   const [notes, setNotes] = useState("");
   const [materials, setMaterials] = useState<Material[]>([]);
+  const [outputProducts, setOutputProducts] = useState<OutputProduct[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -86,6 +96,37 @@ export function CreateWipBatchDialog({
     setMaterials(materials.filter((m) => m.productId !== productId));
   };
 
+  const addOutputProduct = (product: Product) => {
+    const existingOutput = outputProducts.find(
+      (o) => o.productId === product.id,
+    );
+    if (existingOutput) {
+      return; // Product already added
+    }
+
+    const newOutput: OutputProduct = {
+      productId: product.id,
+      productCode: product.code,
+      productName: product.name,
+      unit: product.unit,
+      expectedQuantity: 0,
+    };
+
+    setOutputProducts([...outputProducts, newOutput]);
+  };
+
+  const updateOutputQuantity = (productId: string, quantity: number) => {
+    setOutputProducts(
+      outputProducts.map((o) =>
+        o.productId === productId ? { ...o, expectedQuantity: quantity } : o,
+      ),
+    );
+  };
+
+  const removeOutputProduct = (productId: string) => {
+    setOutputProducts(outputProducts.filter((o) => o.productId !== productId));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -102,7 +143,11 @@ export function CreateWipBatchDialog({
             product_code: m.productCode,
             quantity: m.quantity,
           })),
-          output: [], // Will be filled when batch is completed
+          output: outputProducts.map((o) => ({
+            product_code: o.productCode,
+            quantity: 0, // Initial quantity is 0, will be set during completion
+            expected_quantity: o.expectedQuantity,
+          })),
           product_code: materials[0]?.productCode || "WIP", // Use first material's code or default
           status: "in_progress",
           start_date: new Date().toISOString(),
@@ -115,6 +160,9 @@ export function CreateWipBatchDialog({
         setBatchNumber("");
         setNotes("");
         setMaterials([]);
+        setOutputProducts([]);
+        // Trigger dashboard refresh
+        dashboardEvents.refreshDashboard();
       } else {
         const error = await response.json();
         console.error("Failed to create WIP batch:", error);
@@ -130,7 +178,9 @@ export function CreateWipBatchDialog({
   const isValid =
     batchNumber &&
     materials.length > 0 &&
-    materials.every((m) => m.quantity > 0);
+    materials.every((m) => m.quantity > 0) &&
+    outputProducts.length > 0 &&
+    outputProducts.every((o) => o.expectedQuantity > 0);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -223,6 +273,66 @@ export function CreateWipBatchDialog({
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">
+                Expected Output Products
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ProductLookup
+                onProductSelect={addOutputProduct}
+                placeholder="Add expected output product..."
+                filterRawMaterials={false}
+              />
+
+              {outputProducts.length > 0 && (
+                <div className="space-y-2">
+                  {outputProducts.map((output) => (
+                    <div
+                      key={output.productId}
+                      className="flex items-center space-x-2 p-3 border rounded-md"
+                    >
+                      <div className="flex-1">
+                        <div className="font-medium">{output.productName}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Code: {output.productCode}
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={output.expectedQuantity}
+                          onChange={(e) =>
+                            updateOutputQuantity(
+                              output.productId,
+                              parseFloat(e.target.value) || 0,
+                            )
+                          }
+                          className="w-24"
+                          placeholder="Expected Qty"
+                        />
+                        <span className="text-sm text-muted-foreground">
+                          {output.unit}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeOutputProduct(output.productId)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <div className="flex justify-end space-x-2">
             <Button
               type="button"
@@ -232,6 +342,7 @@ export function CreateWipBatchDialog({
                 setBatchNumber("");
                 setNotes("");
                 setMaterials([]);
+                setOutputProducts([]);
               }}
             >
               Cancel

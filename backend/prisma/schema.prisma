@@ -3,35 +3,32 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model Product {
-  product_code String   @id
+  product_code String           @id
   name         String
   description  String
   weight       Float
   price        Float
   quantity     Int
   last_updated DateTime
-
-  workEntries WorkInProgress[] @relation("ProductToWIP")
+  workEntries  WorkInProgress[] @relation("ProductToWIP")
 }
 
 model WorkInProgress {
-  id            Int      @id @default(autoincrement())
-  batch_number  String   @unique
+  id            Int       @id @default(autoincrement())
+  batch_number  String    @unique
   raw_materials Json
   output        Json
   status        String
   start_date    DateTime
   end_date      DateTime?
-
   product_code  String
-  product       Product?  @relation("ProductToWIP", fields: [product_code], references: [product_code])
+  product       Product   @relation("ProductToWIP", fields: [product_code], references: [product_code])
 }
-
 
 model Order {
   order_id String   @id
@@ -54,7 +51,7 @@ model Manufacturing {
 }
 
 model Customer {
-  id        String   @id 
+  id        String   @id
   name      String
   email     String   @unique
   phone     String?

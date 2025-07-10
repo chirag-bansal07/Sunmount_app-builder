@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -6,7 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { dashboardEvents } from "@/lib/dashboard-events";
 
 interface Product {
   id: string;
@@ -29,6 +31,12 @@ interface WipBatch {
   status: string;
 }
 
+interface OutputProduct {
+  product_code: string;
+  quantity: number;
+  expected_quantity?: number;
+}
+
 interface CompleteWipBatchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -43,12 +51,35 @@ export function CompleteWipBatchDialog({
   onSuccess,
 }: CompleteWipBatchDialogProps) {
   const [loading, setLoading] = useState(false);
+  const [outputProducts, setOutputProducts] = useState<OutputProduct[]>([]);
+
+  useEffect(() => {
+    if (open && batch) {
+      // Load predefined output products from the batch
+      const predefinedOutputs = batch.outputs || [];
+      setOutputProducts(
+        predefinedOutputs.map((output: any) => ({
+          product_code: output.product_code,
+          quantity: output.quantity || 0,
+          expected_quantity: output.expected_quantity || 0,
+        })),
+      );
+    }
+  }, [open, batch]);
+
+  const updateOutputQuantity = (product_code: string, quantity: number) => {
+    setOutputProducts(
+      outputProducts.map((p) =>
+        p.product_code === product_code ? { ...p, quantity } : p,
+      ),
+    );
+  };
 
   const handleSubmit = async () => {
     setLoading(true);
 
     try {
-      // Mark the batch as completed
+      // Update the batch to include output products and mark as completed
       const updateResponse = await fetch(`/api/wip/${batch.batchNumber}`, {
         method: "PUT",
         headers: {
@@ -57,12 +88,18 @@ export function CompleteWipBatchDialog({
         body: JSON.stringify({
           status: "completed",
           end_date: new Date().toISOString(),
+          output: outputProducts.map((p) => ({
+            product_code: p.product_code,
+            quantity: p.quantity,
+          })),
         }),
       });
 
       if (updateResponse.ok) {
         onSuccess();
         onOpenChange(false);
+        // Trigger dashboard refresh
+        dashboardEvents.refreshDashboard();
       } else {
         const error = await updateResponse.json();
         console.error("Failed to complete WIP batch:", error);
@@ -104,31 +141,57 @@ export function CompleteWipBatchDialog({
           </CardContent>
         </Card>
 
-        {/* Expected Outputs (read-only) */}
-        {batch.outputs && batch.outputs.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Expected Outputs</CardTitle>
-            </CardHeader>
-            <CardContent>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Output Products</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {outputProducts.length > 0 ? (
               <div className="space-y-2">
-                {batch.outputs.map((output, index) => (
+                {outputProducts.map((product) => (
                   <div
-                    key={index}
-                    className="flex justify-between items-center p-2 bg-green-50 rounded-md"
+                    key={product.product_code}
+                    className="flex items-center space-x-2 p-3 border rounded-md"
                   >
-                    <span className="font-medium">
-                      {output.product?.name || output.product?.code}
-                    </span>
-                    <span>
-                      {output.quantity} {output.product?.unit || "units"}
-                    </span>
+                    <div className="flex-1">
+                      <div className="font-medium">{product.product_code}</div>
+                      {product.expected_quantity && (
+                        <div className="text-sm text-muted-foreground">
+                          Expected: {product.expected_quantity} units
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Input
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        value={product.quantity || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const numValue = parseFloat(value);
+                          updateOutputQuantity(
+                            product.product_code,
+                            isNaN(numValue) || numValue <= 0 ? 0 : numValue,
+                          );
+                        }}
+                        className="w-24"
+                        placeholder="Actual Qty"
+                      />
+                      <span className="text-sm text-muted-foreground">
+                        units
+                      </span>
+                    </div>
                   </div>
                 ))}
               </div>
-            </CardContent>
-          </Card>
-        )}
+            ) : (
+              <div className="text-sm text-muted-foreground p-4 text-center">
+                No output products defined for this batch.
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         <div className="flex justify-end space-x-2">
           <Button
@@ -140,7 +203,14 @@ export function CompleteWipBatchDialog({
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button
+            onClick={handleSubmit}
+            disabled={
+              loading ||
+              outputProducts.length === 0 ||
+              outputProducts.some((p) => p.quantity <= 0)
+            }
+          >
             {loading ? "Completing..." : "Complete Batch"}
           </Button>
         </div>
