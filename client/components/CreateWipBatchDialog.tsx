@@ -219,7 +219,6 @@ export function CreateWipBatchDialog({
               <ProductLookup
                 onProductSelect={addMaterial}
                 placeholder="Add raw material by product code..."
-                filterRawMaterials={true}
               />
 
               {materials.length > 0 && (
@@ -283,7 +282,6 @@ export function CreateWipBatchDialog({
               <ProductLookup
                 onProductSelect={addOutputProduct}
                 placeholder="Add expected output product..."
-                filterRawMaterials={false}
               />
 
               {outputProducts.length > 0 && (

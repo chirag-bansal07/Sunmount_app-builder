@@ -27,6 +27,11 @@ interface Product {
   code: string;
   name: string;
   unit: string;
+  unitPrice?: number; // Optional, will be used for cost calculations
+  description?: string; // Optional, can be used for more details
+  category?: string; // Optional, can be used for categorization
+  createdAt?: string; // Optional, for tracking creation date
+  updatedAt?: string; // Optional, for tracking last update date
 }
 
 interface WipMaterial {
@@ -322,6 +327,19 @@ export default function WorkInProgress() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
+               {/* Notes */}
+               <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Batch Notes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-sm text-muted-foreground italic p-2">
+                    {selectedBatch.notes?.trim()
+                      ? selectedBatch.notes
+                      : "No notes provided."}
+                  </div>
+                </CardContent>
+              </Card>
               {/* Timeline */}
               <div>
                 <h4 className="font-semibold mb-2">Timeline</h4>
@@ -395,15 +413,7 @@ export default function WorkInProgress() {
                 </div>
               )}
 
-              {/* Notes */}
-              {selectedBatch.notes && (
-                <div>
-                  <h4 className="font-semibold mb-2">Notes</h4>
-                  <div className="p-3 bg-gray-50 rounded">
-                    {selectedBatch.notes}
-                  </div>
-                </div>
-              )}
+             
 
               {/* Actions */}
               <div className="flex gap-2 pt-4">

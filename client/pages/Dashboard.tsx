@@ -68,10 +68,18 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       const [inventoryResponse, wipResponse] = await Promise.all([
-        fetch("/api/inventory"),
-        fetch("/api/wip"),
+        fetch("http://localhost:3000/api/inventory"),
+        fetch("http://localhost:3000/api/wip"),
       ]);
-
+      if (!inventoryResponse.ok) {
+    console.error("Inventory fetch failed:", inventoryResponse.statusText);
+        }
+        if (!inventoryResponse.ok) {
+  console.error("Inventory fetch failed:", inventoryResponse.statusText);
+}
+if (!wipResponse.ok) {
+  console.error("WIP fetch failed:", wipResponse.statusText);
+}
       if (inventoryResponse.ok && wipResponse.ok) {
         const inventoryData = await inventoryResponse.json();
         const wipData = await wipResponse.json();

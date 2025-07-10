@@ -30,7 +30,6 @@ interface Product {
   quantity: number;
   unitPrice: number;
   unit: string;
-  isRawMaterial: boolean;
 }
 
 interface RawMaterial {
@@ -225,10 +224,6 @@ export default function WipForm() {
               p.productId,
             quantity: p.quantity,
           })),
-        product_code: rawMaterials[0]?.productId
-          ? availableProducts.find((p) => p.id === rawMaterials[0].productId)
-              ?.code || rawMaterials[0].productId
-          : "WIP",
         status: "in_progress",
         start_date: new Date(formData.startDate).toISOString(),
       };
