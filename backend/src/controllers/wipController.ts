@@ -134,13 +134,9 @@ export const createBatch = async (req: Request, res: Response) => {
         });
       }
 
-      if (
-        typeof product.quantity !== "number" ||
-        product.quantity <= 0 ||
-        false
-      ) {
+      if (typeof product.quantity !== "number" || product.quantity <= 0) {
         return res.status(400).json({
-          error: `Output product at index ${i} must have a positive integer quantity`,
+          error: `Output product at index ${i} must have a positive quantity`,
         });
       }
     }
