@@ -7,13 +7,7 @@ type RawItem = { product_code: string; quantity: number };
 type OutputItem = { product_code: string; quantity: number };
 
 export const createBatch = async (req: Request, res: Response) => {
-  const {
-    batch_number,
-    raw_materials,
-    output,
-    status,
-    start_date,
-  } = req.body;
+  const { batch_number, raw_materials, output, status, start_date } = req.body;
 
   try {
     const batch = await prisma.$transaction(async (tx) => {
@@ -65,12 +59,11 @@ export const createBatch = async (req: Request, res: Response) => {
         },
       });
       for (const item of output as OutputItem[]) {
-  const existingProduct = await tx.product.findUnique({
-    where: { product_code: item.product_code },
-  });
-
-}
-     return newBatch;
+        const existingProduct = await tx.product.findUnique({
+          where: { product_code: item.product_code },
+        });
+      }
+      return newBatch;
     });
 
     res.status(201).json({
@@ -87,17 +80,14 @@ export const createBatch = async (req: Request, res: Response) => {
 
 export const getAllBatches = async (_req: Request, res: Response) => {
   try {
-  const batches = await prisma.workInProgress.findMany();
+    const batches = await prisma.workInProgress.findMany();
 
-  res.json(batches);
-} catch (error) {
-  console.error("Failed to fetch WIP batches:", error);
-  res.status(500).json({ error: "Internal Server Error" });
-}
+    res.json(batches);
+  } catch (error) {
+    console.error("Failed to fetch WIP batches:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
 };
-  
-
-
 
 export const updateBatch = async (req: Request, res: Response) => {
   const { batch_number } = req.params;
@@ -122,55 +112,57 @@ export const updateBatch = async (req: Request, res: Response) => {
 
       // Step 2: If completing the batch, update inventory
       if (status === "completed") {
-  const outputItems = batch.output as OutputItem[];
+        const outputItems = output as OutputItem[];
 
-  if (!Array.isArray(outputItems)) {
-    throw new Error("Output must be a valid array");
-  }
+        if (!Array.isArray(outputItems)) {
+          throw new Error("Output must be a valid array");
+        }
 
-  for (const item of outputItems) {
-    if (
-      !item ||
-      typeof item.product_code !== "string" ||
-      typeof item.quantity !== "number" ||
-      isNaN(item.quantity)
-    ) {
-      throw new Error(`Invalid output item: ${JSON.stringify(item)}`);
-    }
+        console.log("🔄 Updating inventory for output items:", outputItems);
 
-    if (item.quantity <= 0) {
-      throw new Error(
-        `Output quantity must be positive for '${item.product_code}': ${item.quantity}`,
-      );
-    }
+        for (const item of outputItems) {
+          if (
+            !item ||
+            typeof item.product_code !== "string" ||
+            typeof item.quantity !== "number" ||
+            isNaN(item.quantity)
+          ) {
+            throw new Error(`Invalid output item: ${JSON.stringify(item)}`);
+          }
 
-    const existing = await tx.product.findUnique({
-      where: { product_code: item.product_code },
-    });
+          if (item.quantity <= 0) {
+            throw new Error(
+              `Output quantity must be positive for '${item.product_code}': ${item.quantity}`,
+            );
+          }
 
-    if (existing) {
-      await tx.product.update({
-        where: { product_code: item.product_code },
-        data: {
-          quantity: existing.quantity + item.quantity,
-          last_updated: new Date(),
-        },
-      });
-    } else {
-      await tx.product.create({
-        data: {
-          product_code: item.product_code,
-          name: item.product_code, // or set to "Unnamed Output"
-          description: "Auto-generated from WIP completion",
-          weight: 0,
-          price: 0,
-          quantity: item.quantity,
-          last_updated: new Date(),
-        },
-      });
-    }
-  }
-}
+          const existing = await tx.product.findUnique({
+            where: { product_code: item.product_code },
+          });
+
+          if (existing) {
+            await tx.product.update({
+              where: { product_code: item.product_code },
+              data: {
+                quantity: existing.quantity + item.quantity,
+                last_updated: new Date(),
+              },
+            });
+          } else {
+            await tx.product.create({
+              data: {
+                product_code: item.product_code,
+                name: item.product_code, // or set to "Unnamed Output"
+                description: "Auto-generated from WIP completion",
+                weight: 0,
+                price: 0,
+                quantity: item.quantity,
+                last_updated: new Date(),
+              },
+            });
+          }
+        }
+      }
       return batch;
     });
 
