@@ -66,11 +66,8 @@ export const createBatch = async (req: Request, res: Response) => {
           start_date: new Date(start_date),
         },
       });
-      for (const item of output as OutputItem[]) {
-        const existingProduct = await tx.product.findUnique({
-          where: { product_code: item.product_code },
-        });
-      }
+
+      console.log("✅ WIP batch created successfully:", newBatch);
       return newBatch;
     });
 
