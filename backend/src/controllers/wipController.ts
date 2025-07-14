@@ -111,13 +111,9 @@ export const createBatch = async (req: Request, res: Response) => {
         });
       }
 
-      if (
-        typeof material.quantity !== "number" ||
-        material.quantity <= 0 ||
-        false
-      ) {
+      if (typeof material.quantity !== "number" || material.quantity <= 0) {
         return res.status(400).json({
-          error: `Raw material at index ${i} must have a positive integer quantity`,
+          error: `Raw material at index ${i} must have a positive quantity`,
         });
       }
     }
