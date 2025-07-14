@@ -30,6 +30,9 @@ interface CreateBatchRequest {
  */
 export const createBatch = async (req: Request, res: Response) => {
   try {
+    console.log("📥 Received WIP batch request");
+    console.log("Request body:", JSON.stringify(req.body, null, 2));
+
     const {
       batch_number,
       raw_materials,
