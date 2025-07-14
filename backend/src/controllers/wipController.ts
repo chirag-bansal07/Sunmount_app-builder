@@ -214,6 +214,11 @@ export const createBatch = async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error("❌ WIP batch creation error:", error);
+    console.error("Error details:", {
+      message: error.message,
+      code: error.code,
+      stack: error.stack?.substring(0, 500),
+    });
 
     if (error.code === "P2002") {
       return res.status(409).json({ error: "Batch number already exists" });
