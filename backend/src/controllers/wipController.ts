@@ -9,6 +9,14 @@ type OutputItem = { product_code: string; quantity: number };
 export const createBatch = async (req: Request, res: Response) => {
   const { batch_number, raw_materials, output, status, start_date } = req.body;
 
+  console.log("🔄 Creating WIP batch:", {
+    batch_number,
+    raw_materials,
+    output,
+    status,
+    start_date,
+  });
+
   try {
     const batch = await prisma.$transaction(async (tx) => {
       // ✅ Step 1: Validate and deduct raw materials
