@@ -240,29 +240,32 @@ export default function WipForm() {
       console.log("Response status:", response.status, response.statusText);
 
       if (response.ok) {
-        // For successful responses, try to parse as JSON but don't fail if it doesn't work
-        try {
-          const result = await response.json();
-          console.log("WIP batch created successfully:", result);
-        } catch (jsonError) {
-          console.error("Could not parse success response as JSON:", jsonError);
-          console.log("Response was successful but not valid JSON");
-        }
+        console.log("WIP batch created successfully");
         navigate("/work-in-progress");
       } else {
-        // For error responses, try to get the error message
-        try {
-          const error = await response.json();
-          console.error("Failed to create WIP batch:", error);
-          alert(
-            `Failed to create WIP batch: ${error.error || "Unknown error"}`,
-          );
-        } catch (jsonError) {
-          console.error("Could not parse error response as JSON:", jsonError);
-          alert(
-            `Failed to create WIP batch. Status: ${response.status} ${response.statusText}`,
-          );
+        // Show error based on status code without trying to read response body
+        let errorMessage = "Unknown error occurred";
+
+        switch (response.status) {
+          case 400:
+            errorMessage = "Invalid request data. Please check your inputs.";
+            break;
+          case 404:
+            errorMessage = "WIP endpoint not found.";
+            break;
+          case 409:
+            errorMessage =
+              "Batch number already exists. Please use a different batch number.";
+            break;
+          case 500:
+            errorMessage = "Server error. Please try again later.";
+            break;
+          default:
+            errorMessage = `Request failed with status ${response.status}`;
         }
+
+        console.error("Failed to create WIP batch. Status:", response.status);
+        alert(`Failed to create WIP batch: ${errorMessage}`);
       }
     } catch (error) {
       console.error("Error creating WIP batch:", error);
