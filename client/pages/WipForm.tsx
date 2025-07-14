@@ -402,13 +402,13 @@ export default function WipForm() {
                           <Input
                             type="number"
                             min="0"
-                            step="0.01"
+                            step="1"
                             value={material.quantity}
                             onChange={(e) =>
                               updateRawMaterial(
                                 index,
                                 "quantity",
-                                parseFloat(e.target.value) || 0,
+                                parseInt(e.target.value) || 0,
                               )
                             }
                             className="w-20"
