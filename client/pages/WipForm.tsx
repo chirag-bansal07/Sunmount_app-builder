@@ -96,7 +96,6 @@ export default function WipForm() {
   };
   const allInventory = availableProducts;
 
-
   // Handle form field changes
   const handleFormChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -237,10 +236,13 @@ export default function WipForm() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log("WIP batch created successfully:", result);
         navigate("/work-in-progress");
       } else {
         const error = await response.json();
-        alert(`Failed to create WIP batch: ${error.error}`);
+        console.error("Failed to create WIP batch:", error);
+        alert(`Failed to create WIP batch: ${error.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error creating WIP batch:", error);
@@ -363,11 +365,10 @@ export default function WipForm() {
                             </SelectTrigger>
                             <SelectContent>
                               {allInventory.map((product) => (
-                                  <SelectItem key={product.id} value={product.id}>
-                                    {product.name} ({product.code})
-                                  </SelectItem>
-                                ))
-                              }
+                                <SelectItem key={product.id} value={product.id}>
+                                  {product.name} ({product.code})
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -490,9 +491,7 @@ export default function WipForm() {
                                 <SelectItem key={product.id} value={product.id}>
                                   {product.name} ({product.code})
                                 </SelectItem>
-                                ))
-                              }
-
+                              ))}
                             </SelectContent>
                           </Select>
                         </TableCell>
