@@ -239,34 +239,40 @@ export default function WipForm() {
 
       console.log("Response status:", response.status, response.statusText);
 
+      // Read response as text first to avoid body stream issues
+      let responseText: string;
+      try {
+        responseText = await response.text();
+      } catch (readError) {
+        console.error("Error reading response:", readError);
+        alert(
+          `Failed to create WIP batch. Could not read response. Status: ${response.status}`,
+        );
+        return;
+      }
+
       if (response.ok) {
         try {
-          const result = await response.json();
+          const result = JSON.parse(responseText);
           console.log("WIP batch created successfully:", result);
           navigate("/work-in-progress");
         } catch (jsonError) {
           console.error("Error parsing success response:", jsonError);
-          // If we can't parse the response, still navigate (it might be successful)
+          console.log("Raw response:", responseText);
+          // If we can't parse the response but status is ok, still navigate
           navigate("/work-in-progress");
         }
       } else {
+        let errorMessage = "Unknown error";
         try {
-          const errorText = await response.text();
-          console.error("Error response text:", errorText);
-
-          let errorMessage = "Unknown error";
-          try {
-            const errorJson = JSON.parse(errorText);
-            errorMessage = errorJson.error || errorMessage;
-          } catch (parseError) {
-            errorMessage = errorText || `Status: ${response.status}`;
-          }
-
-          alert(`Failed to create WIP batch: ${errorMessage}`);
-        } catch (textError) {
-          console.error("Error reading error response:", textError);
-          alert(`Failed to create WIP batch. Status: ${response.status}`);
+          const errorJson = JSON.parse(responseText);
+          errorMessage = errorJson.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = responseText || `Status: ${response.status}`;
         }
+
+        console.error("Error response:", responseText);
+        alert(`Failed to create WIP batch: ${errorMessage}`);
       }
     } catch (error) {
       console.error("Error creating WIP batch:", error);
