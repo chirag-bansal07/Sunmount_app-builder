@@ -122,6 +122,7 @@ export const updateBatch = async (req: Request, res: Response) => {
 
       // Step 2: If completing the batch, update inventory
       if (status === "completed") {
+        console.log("working", batch_number);
   const outputItems = batch.output as OutputItem[];
 
   if (!Array.isArray(outputItems)) {
@@ -149,6 +150,7 @@ export const updateBatch = async (req: Request, res: Response) => {
     });
 
     if (existing) {
+      console.log("add working", batch_number);
       await tx.product.update({
         where: { product_code: item.product_code },
         data: {
@@ -157,6 +159,7 @@ export const updateBatch = async (req: Request, res: Response) => {
         },
       });
     } else {
+      console.log("create working", batch_number);
       await tx.product.create({
         data: {
           product_code: item.product_code,
