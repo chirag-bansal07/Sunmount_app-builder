@@ -138,7 +138,7 @@ export const createBatch = async (req: Request, res: Response) => {
       if (
         typeof product.quantity !== "number" ||
         product.quantity <= 0 ||
-        !Number.isInteger(product.quantity)
+        false
       ) {
         return res.status(400).json({
           error: `Output product at index ${i} must have a positive integer quantity`,
