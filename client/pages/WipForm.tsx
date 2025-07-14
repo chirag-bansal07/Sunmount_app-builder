@@ -227,6 +227,8 @@ export default function WipForm() {
         start_date: new Date(formData.startDate).toISOString(),
       };
 
+      console.log("Sending WIP data:", wipData);
+
       const response = await fetch("/api/wip", {
         method: "POST",
         headers: {
@@ -235,14 +237,31 @@ export default function WipForm() {
         body: JSON.stringify(wipData),
       });
 
+      console.log("Response status:", response.status, response.statusText);
+
       if (response.ok) {
-        const result = await response.json();
-        console.log("WIP batch created successfully:", result);
-        navigate("/work-in-progress");
+        try {
+          const result = await response.json();
+          console.log("WIP batch created successfully:", result);
+          navigate("/work-in-progress");
+        } catch (jsonError) {
+          console.error("Error parsing success response:", jsonError);
+          // If we can't parse the response, still navigate (it might be successful)
+          navigate("/work-in-progress");
+        }
       } else {
-        const error = await response.json();
-        console.error("Failed to create WIP batch:", error);
-        alert(`Failed to create WIP batch: ${error.error || "Unknown error"}`);
+        try {
+          const error = await response.json();
+          console.error("Failed to create WIP batch:", error);
+          alert(
+            `Failed to create WIP batch: ${error.error || "Unknown error"}`,
+          );
+        } catch (jsonError) {
+          console.error("Error parsing error response:", jsonError);
+          const responseText = await response.text();
+          console.error("Raw response:", responseText);
+          alert(`Failed to create WIP batch. Status: ${response.status}`);
+        }
       }
     } catch (error) {
       console.error("Error creating WIP batch:", error);
