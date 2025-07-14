@@ -96,6 +96,7 @@ export default function WipForm() {
   };
   const allInventory = availableProducts;
 
+
   // Handle form field changes
   const handleFormChange = (field: string, value: string) => {
     setFormData((prev) => ({
@@ -227,11 +228,6 @@ export default function WipForm() {
         start_date: new Date(formData.startDate).toISOString(),
       };
 
-      console.log("Sending WIP data:", wipData);
-      console.log("Raw materials count:", wipData.raw_materials.length);
-      console.log("Expected output count:", wipData.output.length);
-      console.log("Available products:", availableProducts.length);
-
       const response = await fetch("/api/wip", {
         method: "POST",
         headers: {
@@ -240,35 +236,11 @@ export default function WipForm() {
         body: JSON.stringify(wipData),
       });
 
-      console.log("Response status:", response.status, response.statusText);
-
       if (response.ok) {
-        console.log("WIP batch created successfully");
         navigate("/work-in-progress");
       } else {
-        // Show error based on status code without trying to read response body
-        let errorMessage = "Unknown error occurred";
-
-        switch (response.status) {
-          case 400:
-            errorMessage = "Invalid request data. Please check your inputs.";
-            break;
-          case 404:
-            errorMessage = "WIP endpoint not found.";
-            break;
-          case 409:
-            errorMessage =
-              "Batch number already exists. Please use a different batch number.";
-            break;
-          case 500:
-            errorMessage = "Server error. Please try again later.";
-            break;
-          default:
-            errorMessage = `Request failed with status ${response.status}`;
-        }
-
-        console.error("Failed to create WIP batch. Status:", response.status);
-        alert(`Failed to create WIP batch: ${errorMessage}`);
+        const error = await response.json();
+        alert(`Failed to create WIP batch: ${error.error}`);
       }
     } catch (error) {
       console.error("Error creating WIP batch:", error);
@@ -391,10 +363,11 @@ export default function WipForm() {
                             </SelectTrigger>
                             <SelectContent>
                               {allInventory.map((product) => (
-                                <SelectItem key={product.id} value={product.id}>
-                                  {product.name} ({product.code})
-                                </SelectItem>
-                              ))}
+                                  <SelectItem key={product.id} value={product.id}>
+                                    {product.name} ({product.code})
+                                  </SelectItem>
+                                ))
+                              }
                             </SelectContent>
                           </Select>
                         </TableCell>
@@ -402,13 +375,13 @@ export default function WipForm() {
                           <Input
                             type="number"
                             min="0"
-                            step="1"
+                            step="0.01"
                             value={material.quantity}
                             onChange={(e) =>
                               updateRawMaterial(
                                 index,
                                 "quantity",
-                                parseInt(e.target.value) || 0,
+                                parseFloat(e.target.value) || 0,
                               )
                             }
                             className="w-20"
@@ -517,7 +490,9 @@ export default function WipForm() {
                                 <SelectItem key={product.id} value={product.id}>
                                   {product.name} ({product.code})
                                 </SelectItem>
-                              ))}
+                                ))
+                              }
+
                             </SelectContent>
                           </Select>
                         </TableCell>

@@ -1,10 +1,6 @@
-import { Router } from "express";
-import {
-  searchProductsByCode,
-  deleteProduct,
-} from "../controllers/productController";
+import { Router } from 'express';
+import { searchProductsByCode } from '../controllers/productController';
 const router = Router();
 
-router.get("/search", searchProductsByCode);
-router.delete("/:product_code", deleteProduct);
+router.get('/search', searchProductsByCode);
 export default router;

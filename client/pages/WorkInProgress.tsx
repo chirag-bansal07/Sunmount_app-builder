@@ -71,27 +71,11 @@ export default function WorkInProgress() {
 
   const fetchWipBatches = async () => {
     try {
-      const [wipResponse, inventoryResponse] = await Promise.all([
-        fetch("/api/wip"),
-        fetch("/api/inventory"),
-      ]);
-
-      if (wipResponse.ok && inventoryResponse.ok) {
-        const wipData = await wipResponse.json();
-        const inventoryData = await inventoryResponse.json();
-
-        // Create product lookup map
-        const productMap = new Map();
-        inventoryData.forEach((product: any) => {
-          productMap.set(product.product_code, {
-            name: product.name,
-            description: product.description,
-            price: product.price,
-          });
-        });
-
+      const response = await fetch("/api/wip");
+      if (response.ok) {
+        const data = await response.json();
         // Transform the data to match frontend interface
-        const transformedData = wipData.map((batch: any) => ({
+        const transformedData = data.map((batch: any) => ({
           id: batch.id.toString(),
           batchNumber: batch.batch_number,
           status: batch.status.toUpperCase(),
@@ -99,43 +83,33 @@ export default function WorkInProgress() {
           endDate: batch.end_date,
           notes: "",
           materials: Array.isArray(batch.raw_materials)
-            ? batch.raw_materials.map((mat: any, index: number) => {
-                const productInfo = productMap.get(mat.product_code);
-                return {
-                  id: index.toString(),
-                  quantity: mat.quantity,
-                  product: {
-                    id: mat.product_code,
-                    code: mat.product_code,
-                    name: productInfo?.name || mat.product_code,
-                    unit: "units",
-                    description: productInfo?.description,
-                    unitPrice: productInfo?.price,
-                  },
-                };
-              })
+            ? batch.raw_materials.map((mat: any, index: number) => ({
+                id: index.toString(),
+                quantity: mat.quantity,
+                product: {
+                  id: mat.product_code,
+                  code: mat.product_code,
+                  name: mat.product_code, // Will be enhanced with product lookup
+                  unit: "units",
+                },
+              }))
             : [],
           outputs: Array.isArray(batch.output)
-            ? batch.output.map((out: any, index: number) => {
-                const productInfo = productMap.get(out.product_code);
-                return {
-                  id: index.toString(),
-                  quantity: out.quantity,
-                  product: {
-                    id: out.product_code,
-                    code: out.product_code,
-                    name: productInfo?.name || out.product_code,
-                    unit: "units",
-                    description: productInfo?.description,
-                    unitPrice: productInfo?.price,
-                  },
-                };
-              })
+            ? batch.output.map((out: any, index: number) => ({
+                id: index.toString(),
+                quantity: out.quantity,
+                product: {
+                  id: out.product_code,
+                  code: out.product_code,
+                  name: out.product_code, // Will be enhanced with product lookup
+                  unit: "units",
+                },
+              }))
             : [],
         }));
         setWipBatches(transformedData);
       } else {
-        console.error("Failed to fetch WIP batches or inventory");
+        console.error("Failed to fetch WIP batches");
       }
     } catch (error) {
       console.error("Error fetching WIP batches:", error);
@@ -249,9 +223,7 @@ export default function WorkInProgress() {
                       {batch.batchNumber}
                     </h3>
                     <p className="text-gray-600">
-                      {batch.outputs.length > 0
-                        ? `Outputs: ${batch.outputs.map((o) => o.product.name).join(", ")}`
-                        : `Materials: ${batch.materials.length} items`}
+                      Materials: {batch.materials.length} items
                     </p>
                   </div>
                 </div>
@@ -355,8 +327,8 @@ export default function WorkInProgress() {
               </div>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Notes */}
-              <Card>
+               {/* Notes */}
+               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Batch Notes</CardTitle>
                 </CardHeader>
@@ -440,6 +412,8 @@ export default function WorkInProgress() {
                   </div>
                 </div>
               )}
+
+             
 
               {/* Actions */}
               <div className="flex gap-2 pt-4">
