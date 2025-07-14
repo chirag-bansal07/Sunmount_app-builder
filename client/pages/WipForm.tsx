@@ -251,15 +251,20 @@ export default function WipForm() {
         }
       } else {
         try {
-          const error = await response.json();
-          console.error("Failed to create WIP batch:", error);
-          alert(
-            `Failed to create WIP batch: ${error.error || "Unknown error"}`,
-          );
-        } catch (jsonError) {
-          console.error("Error parsing error response:", jsonError);
-          const responseText = await response.text();
-          console.error("Raw response:", responseText);
+          const errorText = await response.text();
+          console.error("Error response text:", errorText);
+
+          let errorMessage = "Unknown error";
+          try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.error || errorMessage;
+          } catch (parseError) {
+            errorMessage = errorText || `Status: ${response.status}`;
+          }
+
+          alert(`Failed to create WIP batch: ${errorMessage}`);
+        } catch (textError) {
+          console.error("Error reading error response:", textError);
           alert(`Failed to create WIP batch. Status: ${response.status}`);
         }
       }
