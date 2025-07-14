@@ -228,6 +228,9 @@ export default function WipForm() {
       };
 
       console.log("Sending WIP data:", wipData);
+      console.log("Raw materials count:", wipData.raw_materials.length);
+      console.log("Expected output count:", wipData.output.length);
+      console.log("Available products:", availableProducts.length);
 
       const response = await fetch("/api/wip", {
         method: "POST",
