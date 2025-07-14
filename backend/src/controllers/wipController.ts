@@ -141,6 +141,9 @@ export const updateBatch = async (req: Request, res: Response) => {
           });
 
           if (existing) {
+            console.log(
+              `📦 Updating existing product ${item.product_code}: ${existing.quantity} + ${item.quantity} = ${existing.quantity + item.quantity}`,
+            );
             await tx.product.update({
               where: { product_code: item.product_code },
               data: {
@@ -149,6 +152,9 @@ export const updateBatch = async (req: Request, res: Response) => {
               },
             });
           } else {
+            console.log(
+              `🆕 Creating new product ${item.product_code} with quantity ${item.quantity}`,
+            );
             await tx.product.create({
               data: {
                 product_code: item.product_code,
