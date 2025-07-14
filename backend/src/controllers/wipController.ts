@@ -111,7 +111,7 @@ export const createBatch = async (req: Request, res: Response) => {
       if (
         typeof material.quantity !== "number" ||
         material.quantity <= 0 ||
-        !Number.isInteger(material.quantity)
+        false
       ) {
         return res.status(400).json({
           error: `Raw material at index ${i} must have a positive integer quantity`,
