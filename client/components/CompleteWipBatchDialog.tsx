@@ -75,8 +75,12 @@ export function CompleteWipBatchDialog({
     );
   };
 
-// updated section inside handleSubmit
 const handleSubmit = async () => {
+  if (batch.status === "completed") {
+    alert("This batch is already marked as completed.");
+    return;
+  }
+
   setLoading(true);
   try {
     const validOutputs = outputProducts
@@ -225,11 +229,12 @@ const handleSubmit = async () => {
             onClick={handleSubmit}
             disabled={
               loading ||
+              batch.status === "completed" ||
               outputProducts.length === 0 ||
               outputProducts.some((p) => typeof p.quantity !== "number" || p.quantity <= 0)
             }
           >
-            {loading ? "Completing..." : "Complete Batch"}
+            {loading ? "Completing..." : batch.status === "completed" ? "Already Completed" : "Complete Batch"}
           </Button>
         </div>
       </DialogContent>

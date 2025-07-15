@@ -1,6 +1,11 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -17,21 +22,17 @@ import {
   Settings,
   Calendar,
   Package,
-  ArrowRight,
   Factory,
+  ArrowRight,
 } from "lucide-react";
 import { CompleteWipBatchDialog } from "@/components/CompleteWipBatchDialog";
 
 interface Product {
   id: string;
   code: string;
-  name: string;
+  name?: string;
   unit: string;
-  unitPrice?: number; // Optional, will be used for cost calculations
-  description?: string; // Optional, can be used for more details
-  category?: string; // Optional, can be used for categorization
-  createdAt?: string; // Optional, for tracking creation date
-  updatedAt?: string; // Optional, for tracking last update date
+  unitPrice?: number;
 }
 
 interface WipMaterial {
@@ -69,96 +70,90 @@ export default function WorkInProgress() {
     fetchWipBatches();
   }, []);
 
-  const fetchWipBatches = async () => {
+  async function fetchWipBatches() {
     try {
-      const response = await fetch("/api/wip");
-      if (response.ok) {
-        const data = await response.json();
-        // Transform the data to match frontend interface
+      const res = await fetch("/api/wip");
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+        // …inside fetchWipBatches(), when you do data.map(…):
         const transformedData = data.map((batch: any) => ({
           id: batch.id.toString(),
           batchNumber: batch.batch_number,
           status: batch.status.toUpperCase(),
           startDate: batch.start_date,
           endDate: batch.end_date,
-          notes: "",
-          materials: Array.isArray(batch.raw_materials)
-            ? batch.raw_materials.map((mat: any, index: number) => ({
-                id: index.toString(),
-                quantity: mat.quantity,
-                product: {
-                  id: mat.product_code,
-                  code: mat.product_code,
-                  name: mat.product_code, // Will be enhanced with product lookup
-                  unit: "units",
-                },
-              }))
-            : [],
-          outputs: Array.isArray(batch.output)
-            ? batch.output.map((out: any, index: number) => ({
-                id: index.toString(),
-                quantity: out.quantity,
-                product: {
-                  id: out.product_code,
-                  code: out.product_code,
-                  name: out.product_code, // Will be enhanced with product lookup
-                  unit: "units",
-                },
-              }))
-            : [],
+          notes: batch.notes,
+
+        materials: Array.isArray(batch.raw_materials)
+          ? batch.raw_materials.map((mat: any, i: number) => ({
+              id: `${batch.batch_number}-mat-${i}`,
+              quantity: mat.quantity,
+              product: {
+                id:   mat.product_code,
+                code: mat.product_code,
+                name: mat.name || mat.product_code,   // ← use backend’s `name`
+                unit: mat.unit || "units",            // ← if you enriched unit
+              },
+            }))
+          : [],
+
+        outputs: Array.isArray(batch.output)
+          ? batch.output.map((out: any, i: number) => ({
+              id: `${batch.batch_number}-out-${i}`,
+              quantity: out.quantity,
+              product: {
+                id:   out.product_code,
+                code: out.product_code,
+                name: out.name || out.product_code,   // ← use backend’s `name`
+                unit: out.unit || "units",
+              },
+            }))
+          : [],
+
         }));
-        setWipBatches(transformedData);
-      } else {
-        console.error("Failed to fetch WIP batches");
-      }
-    } catch (error) {
-      console.error("Error fetching WIP batches:", error);
+      setWipBatches(transformedData);
+    } catch {
+      console.error("Failed to fetch WIP batches");
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  const filteredWipBatches = wipBatches.filter((batch) => {
-    const matchesSearch = batch.batchNumber
+  // Filter
+  const filtered = wipBatches.filter((b) => {
+    const matchesSearch = b.batchNumber
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
     const matchesStatus =
-      statusFilter === "all" || batch.status.toLowerCase() === statusFilter;
-
+      statusFilter === "all" || b.status.toLowerCase() === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "in_progress":
+  // Helpers
+  const formatDate = (s: string) =>
+    new Date(s).toLocaleDateString("en-IN");
+  const formatDateTime = (s: string) =>
+    new Date(s).toLocaleString("en-IN");
+  const calcCost = (mats: WipMaterial[]) =>
+    mats.reduce((sum, m) => sum + m.quantity * (m.product.unitPrice || 0), 0);
+
+  const getStatusColor = (s: string) => {
+    switch (s) {
+      case "IN_PROGRESS":
         return "default";
-      case "completed":
+      case "COMPLETED":
         return "secondary";
-      case "cancelled":
+      case "CANCELLED":
         return "destructive";
       default:
         return "outline";
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString();
-  };
-
-  const formatDateTime = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
-  };
-
-  const calculateMaterialCost = (materials: WipMaterial[]) => {
-    return materials.reduce((total, material) => {
-      return total + material.quantity * (material.product?.unitPrice || 0);
-    }, 0);
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Loading WIP batches...</div>
+        <div className="text-lg">Loading WIP batches…</div>
       </div>
     );
   }
@@ -167,11 +162,10 @@ export default function WorkInProgress() {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900">Work in Progress</h1>
+        <h1 className="text-3xl font-bold">Work in Progress</h1>
         <Link to="/work-in-progress/new">
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Add to WIP
+            <Plus className="mr-2 h-4 w-4" /> Add to WIP
           </Button>
         </Link>
       </div>
@@ -180,22 +174,27 @@ export default function WorkInProgress() {
       <Card>
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search batches..."
+                className="pl-10"
+                placeholder="Search batches…"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <Select
+              value={statusFilter}
+              onValueChange={setStatusFilter}
+            >
               <SelectTrigger className="w-full md:w-40">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="in_progress">
+                  In Progress
+                </SelectItem>
                 <SelectItem value="completed">Completed</SelectItem>
                 <SelectItem value="cancelled">Cancelled</SelectItem>
               </SelectContent>
@@ -204,154 +203,202 @@ export default function WorkInProgress() {
         </CardContent>
       </Card>
 
-      {/* WIP Batches List */}
+      {/* Batches Grid */}
       <div className="grid gap-4">
-        {filteredWipBatches.map((batch) => (
-          <Card
-            key={batch.id}
-            className="hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => setSelectedBatch(batch)}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <Factory className="h-6 w-6 text-orange-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-lg font-semibold">
-                      {batch.batchNumber}
-                    </h3>
-                    <p className="text-gray-600">
-                      Materials: {batch.materials.length} items
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Badge variant={getStatusColor(batch.status)}>
-                    {batch.status.replace("_", " ")}
-                  </Badge>
-                  {batch.status === "IN_PROGRESS" && (
-                    <Button
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedBatch(batch);
-                        setIsCompleteDialogOpen(true);
-                      }}
-                    >
-                      Complete
-                    </Button>
-                  )}
-                </div>
-              </div>
+        {filtered.map((batch) => {
+          // prepare summary stats by mapping
+          const stats = [
+            {
+              key: "start",
+              icon: <Calendar className="h-4 w-4 text-gray-600" />,
+              label: "Started",
+              value: formatDate(batch.startDate),
+            },
+            batch.endDate && {
+              key: "end",
+              icon: <Package className="h-4 w-4 text-gray-600" />,
+              label: "Completed",
+              value: formatDate(batch.endDate),
+            },
+            {
+              key: "cost",
+              icon: <Settings className="h-4 w-4 text-gray-600" />,
+              label: "Materials Cost",
+              value: `₹${calcCost(batch.materials).toFixed(2)}`,
+            },
+          ].filter(Boolean) as {
+            key: string;
+            icon: React.ReactNode;
+            label: string;
+            value: string;
+          }[];
 
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center text-sm text-gray-600">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Started: {formatDate(batch.startDate)}
+          // join output names
+          const outputNames = batch.outputs
+            .map((o) => o.product.name || o.product.code)
+            .join(", ");
+
+          return (
+            <Card
+              key={batch.id}
+              onClick={() => setSelectedBatch(batch)}
+              className="cursor-pointer hover:shadow-md transition-shadow"
+            >
+              <CardContent className="p-6">
+                {/* Header row */}
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center space-x-4">
+                    <div className="rounded-lg bg-orange-100 p-2">
+                      <Factory className="h-6 w-6 text-orange-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold">
+                        {batch.batchNumber}
+                      </h3>
+                      {outputNames ? (
+                        <p className="text-gray-600">
+                          Outputs: {outputNames}
+                        </p>
+                      ) : (
+                        <p className="text-gray-600 italic">
+                          No outputs defined
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <Badge variant={getStatusColor(batch.status)}>
+                      {batch.status.replace("_", " ")}
+                    </Badge>
+                    {batch.status === "IN_PROGRESS" && (
+                      <Button
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedBatch(batch);
+                          setIsCompleteDialogOpen(true);
+                        }}
+                      >
+                        Complete
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                {batch.endDate && (
-                  <div className="flex items-center text-sm text-gray-600">
-                    <Package className="h-4 w-4 mr-2" />
-                    Completed: {formatDate(batch.endDate)}
+
+                {/* Stats row */}
+                <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {stats.map((s) => (
+                    <div
+                      key={s.key}
+                      className="flex items-center text-sm text-gray-600"
+                    >
+                      {s.icon}
+                      <span className="ml-2">
+                        {s.label}: {s.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Notes */}
+                {batch.notes && (
+                  <div className="mt-3 rounded bg-gray-50 p-2 text-sm">
+                    {batch.notes}
                   </div>
                 )}
-                <div className="flex items-center text-sm font-medium">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Materials: $
-                  {calculateMaterialCost(batch.materials).toFixed(2)}
-                </div>
-              </div>
+              </CardContent>
+            </Card>
+          );
+        })}
 
-              {batch.notes && (
-                <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
-                  {batch.notes}
-                </div>
-              )}
+        {filtered.length === 0 && (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Factory className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+              <h3 className="mb-2 text-lg font-medium">
+                No WIP batches found
+              </h3>
+              <p className="mb-4 text-gray-600">
+                Adjust your search or filters, or add a new batch.
+              </p>
+              <Link to="/work-in-progress/new">
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" /> Add to WIP
+                </Button>
+              </Link>
             </CardContent>
           </Card>
-        ))}
+        )}
       </div>
 
-      {filteredWipBatches.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Factory className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No WIP batches found
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Try adjusting your search or filters, or create a new WIP batch.
-            </p>
-            <Link to="/work-in-progress/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add to WIP
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-      )}
+      {/* Complete Dialog */}
+          {selectedBatch && (
+      <CompleteWipBatchDialog
+        open={isCompleteDialogOpen}
+        onOpenChange={setIsCompleteDialogOpen}
+        batch={{
+          id:          selectedBatch.id,
+          batchNumber: selectedBatch.batchNumber,
+          status:      selectedBatch.status,
+          notes:       selectedBatch.notes ?? null,
 
-      {/* Dialogs */}
-      {selectedBatch && (
-        <CompleteWipBatchDialog
-          open={isCompleteDialogOpen}
-          onOpenChange={setIsCompleteDialogOpen}
-          batch={selectedBatch}
-          onSuccess={fetchWipBatches}
-        />
-      )}
+          // build a fresh array of exactly the WipMaterial shape the dialog expects
+          materials: selectedBatch.materials.map((m) => ({
+            id:       m.id,
+            quantity: m.quantity,
+            product: {
+              id:   m.product.id,
+              code: m.product.code,
+              name: m.product.name || "",  // now guaranteed string
+              unit: m.product.unit,
+            },
+          })),
 
-      {/* Batch Details Modal */}
+          // and likewise for outputs, matching the OutputProduct interface
+          outputs: selectedBatch.outputs.map((o) => ({
+            product_code:      o.product.code,
+            quantity:          o.quantity,
+            expected_quantity: o.quantity,
+          })),
+        }}
+        onSuccess={() => {
+          setIsCompleteDialogOpen(false);
+          fetchWipBatches();
+        }}
+      />
+    )}
+
+
+      {/* Detail Modal */}
       {selectedBatch && !isCompleteDialogOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-auto">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <CardTitle className="text-xl">
-                    {selectedBatch.batchNumber}
-                  </CardTitle>
-                  <Badge
-                    variant={getStatusColor(selectedBatch.status)}
-                    className="mt-2"
-                  >
-                    {selectedBatch.status.replace("_", " ")}
-                  </Badge>
-                </div>
-                <Button variant="ghost" onClick={() => setSelectedBatch(null)}>
-                  ×
-                </Button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <Card className="max-h-[90vh] w-full max-w-2xl overflow-auto">
+            <CardHeader className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-xl">
+                  {selectedBatch.batchNumber}
+                </CardTitle>
+                <Badge variant={getStatusColor(selectedBatch.status)}>
+                  {selectedBatch.status.replace("_", " ")}
+                </Badge>
               </div>
+              <Button variant="ghost" onClick={() => setSelectedBatch(null)}>
+                ×
+              </Button>
             </CardHeader>
             <CardContent className="space-y-6">
-               {/* Notes */}
-               <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Batch Notes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm text-muted-foreground italic p-2">
-                    {selectedBatch.notes?.trim()
-                      ? selectedBatch.notes
-                      : "No notes provided."}
-                  </div>
-                </CardContent>
-              </Card>
               {/* Timeline */}
               <div>
                 <h4 className="font-semibold mb-2">Timeline</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-gray-600">Start Date:</span>{" "}
-                    {formatDateTime(selectedBatch.startDate)}
+                    <Calendar className="inline-block h-4 w-4 mr-2 text-gray-600" />
+                    Start: {formatDateTime(selectedBatch.startDate)}
                   </div>
                   {selectedBatch.endDate && (
                     <div>
-                      <span className="text-gray-600">End Date:</span>{" "}
-                      {formatDateTime(selectedBatch.endDate)}
+                      <Package className="inline-block h-4 w-4 mr-2 text-gray-600" />
+                      End: {formatDateTime(selectedBatch.endDate)}
                     </div>
                   )}
                 </div>
@@ -359,53 +406,53 @@ export default function WorkInProgress() {
 
               {/* Materials Used */}
               <div>
-                <h4 className="font-semibold mb-3">Materials Used</h4>
+                <h4 className="mb-3 font-semibold">Materials Used</h4>
                 <div className="space-y-2">
-                  {selectedBatch.materials.map((material) => (
+                  {selectedBatch.materials.map((mat) => (
                     <div
-                      key={material.id}
-                      className="flex justify-between items-center p-3 bg-gray-50 rounded"
+                      key={mat.id}
+                      className="flex justify-between items-center rounded bg-gray-50 p-3"
                     >
                       <div>
                         <div className="font-medium">
-                          {material.product.name}
+                          {mat.product.name || mat.product.code}
                         </div>
-                        <div className="text-sm text-gray-600">
-                          Code: {material.product.code}
-                        </div>
+                        {mat.product.name && (
+                          <div className="text-sm text-gray-600">
+                            Code: {mat.product.code}
+                          </div>
+                        )}
                       </div>
                       <div className="text-right">
-                        <div className="font-medium">
-                          {material.quantity} {material.product.unit}
-                        </div>
+                        {mat.quantity} {mat.product.unit}
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              {/* Outputs (if completed) */}
+              {/* Outputs Produced */}
               {selectedBatch.outputs.length > 0 && (
                 <div>
-                  <h4 className="font-semibold mb-3">Outputs Produced</h4>
+                  <h4 className="mb-3 font-semibold">Outputs Produced</h4>
                   <div className="space-y-2">
-                    {selectedBatch.outputs.map((output) => (
+                    {selectedBatch.outputs.map((out) => (
                       <div
-                        key={output.id}
-                        className="flex justify-between items-center p-3 bg-green-50 rounded"
+                        key={out.id}
+                        className="flex justify-between items-center rounded bg-green-50 p-3"
                       >
                         <div>
                           <div className="font-medium">
-                            {output.product.name}
+                            {out.product.name || out.product.code}
                           </div>
-                          <div className="text-sm text-gray-600">
-                            Code: {output.product.code}
-                          </div>
+                          {out.product.name && (
+                            <div className="text-sm text-gray-600">
+                              Code: {out.product.code}
+                            </div>
+                          )}
                         </div>
                         <div className="text-right">
-                          <div className="font-medium">
-                            {output.quantity} {output.product.unit}
-                          </div>
+                          {out.quantity} {out.product.unit}
                         </div>
                       </div>
                     ))}
@@ -413,19 +460,15 @@ export default function WorkInProgress() {
                 </div>
               )}
 
-             
-
               {/* Actions */}
               <div className="flex gap-2 pt-4">
                 {selectedBatch.status === "IN_PROGRESS" && (
                   <Button
                     className="flex-1"
-                    onClick={() => {
-                      setIsCompleteDialogOpen(true);
-                    }}
+                    onClick={() => setIsCompleteDialogOpen(true)}
                   >
                     Complete Batch
-                    <ArrowRight className="h-4 w-4 ml-2" />
+                    <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 )}
                 <Button
