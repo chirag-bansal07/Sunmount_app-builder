@@ -12,7 +12,7 @@
   },
   "scripts": {
     "dev": "concurrently \"cd backend && npm run dev\" \"vite\"",
-    "build": "cd backend && npm run db:generate && cd .. && npm run build:client && npm run build:server",
+    "build": "npx prisma generate && npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "vite build --config vite.config.server.ts",
     "start": "node dist/server/node-build.mjs",
@@ -25,8 +25,6 @@
     "db:setup": "npm run db:generate && npm run db:push && npm run db:seed"
   },
   "dependencies": {
-    "@prisma/client": "^6.12.0",
-    "@vercel/node": "^5.3.5",
     "express": "^4.18.2",
     "zod": "^3.23.8"
   },
@@ -75,7 +73,6 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.0.0",
-    "concurrently": "^9.2.0",
     "cors": "^2.8.5",
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.3.0",
