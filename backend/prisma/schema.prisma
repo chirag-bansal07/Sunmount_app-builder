@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -18,8 +18,8 @@ model Product {
 }
 
 model WorkInProgress {
-  id            Int       @id @default(autoincrement())
-  batch_number  String    @unique
+  id           Int      @id @default(autoincrement())
+  batch_number String   @unique
   raw_materials Json
   output        Json
   status        String
@@ -29,7 +29,7 @@ model WorkInProgress {
 
 model Order {
   order_id String   @id
-  type     String
+  type     String   @map("type") // 'type' is a PostgreSQL reserved word
   bom      String
   party_id String
   products Json
@@ -39,7 +39,7 @@ model Order {
 }
 
 model Manufacturing {
-  batch_number  String   @id
+  batch_number String   @id
   raw_materials Json
   output        Json
   status        String
