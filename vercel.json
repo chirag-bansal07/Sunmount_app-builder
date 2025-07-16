@@ -2,10 +2,6 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/src/vercel.ts",
-      "use": "@vercel/node"
-    },
-    {
       "src": "package.json",
       "use": "@vercel/static-build",
       "config": {
@@ -15,19 +11,15 @@
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/backend/src/vercel.ts"
-    },
-    {
       "src": "/(.*)",
       "dest": "/dist/spa/$1"
     }
   ],
   "env": {
-    "DATABASE_URL": "@database_url"
+    "DATABASE_URL": "postgresql://neondb_owner:npg_8kHq0QWMzBoy@ep-floral-night-a18b538f-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
   },
   "functions": {
-    "backend/src/vercel.ts": {
+    "api/**/*.ts": {
       "maxDuration": 30
     }
   }
