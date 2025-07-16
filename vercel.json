@@ -25,5 +25,10 @@
   ],
   "env": {
     "DATABASE_URL": "@database_url"
+  },
+  "functions": {
+    "backend/src/index.ts": {
+      "maxDuration": 30
+    }
   }
 }
