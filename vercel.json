@@ -27,7 +27,7 @@
     "DATABASE_URL": "@database_url"
   },
   "functions": {
-    "backend/src/index.ts": {
+    "backend/src/vercel.ts": {
       "maxDuration": 30
     }
   }
