@@ -57,6 +57,12 @@ interface WipBatch {
   materials: WipMaterial[];
   outputs: WipOutput[];
 }
+interface CompleteWipBatchDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  batch: WipBatch;
+  onSuccess: () => void;
+}
 
 export default function WorkInProgress() {
   const [wipBatches, setWipBatches] = useState<WipBatch[]>([]);
@@ -75,43 +81,40 @@ export default function WorkInProgress() {
       const res = await fetch("/api/wip");
       if (!res.ok) throw new Error();
       const data = await res.json();
-        // …inside fetchWipBatches(), when you do data.map(…):
-        const transformedData = data.map((batch: any) => ({
-          id: batch.id.toString(),
-          batchNumber: batch.batch_number,
-          status: batch.status.toUpperCase(),
-          startDate: batch.start_date,
-          endDate: batch.end_date,
-          notes: batch.notes,
-
-        materials: Array.isArray(batch.raw_materials)
-          ? batch.raw_materials.map((mat: any, i: number) => ({
-              id: `${batch.batch_number}-mat-${i}`,
-              quantity: mat.quantity,
+      const transformed: WipBatch[] = data.map((b: any) => ({
+        id: b.id.toString(),
+        batchNumber: b.batch_number,
+        status: b.status,
+        startDate: b.start_date,
+        endDate: b.end_date || undefined,
+        notes: b.notes || undefined,
+        materials: Array.isArray(b.raw_materials)
+          ? b.raw_materials.map((m: any, i: number) => ({
+              id: `${b.batch_number}-mat-${i}`,
+              quantity: m.quantity,
               product: {
-                id:   mat.product_code,
-                code: mat.product_code,
-                name: mat.name || mat.product_code,   // ← use backend’s `name`
-                unit: mat.unit || "units",            // ← if you enriched unit
+                id: m.product_code,
+                code: m.product_code,
+                name: m.product_name, // if your backend provides name
+                unit: "units",
+                unitPrice: m.unit_price,
               },
             }))
           : [],
-
-        outputs: Array.isArray(batch.output)
-          ? batch.output.map((out: any, i: number) => ({
-              id: `${batch.batch_number}-out-${i}`,
-              quantity: out.quantity,
+        outputs: Array.isArray(b.output)
+          ? b.output.map((o: any, i: number) => ({
+              id: `${b.batch_number}-out-${i}`,
+              quantity: o.quantity,
               product: {
-                id:   out.product_code,
-                code: out.product_code,
-                name: out.name || out.product_code,   // ← use backend’s `name`
-                unit: out.unit || "units",
+                id: o.product_code,
+                code: o.product_code,
+                name: o.product_name,
+                unit: "units",
               },
             }))
           : [],
-
-        }));
-      setWipBatches(transformedData);
+      }));
+      setWipBatches(transformed);
     } catch {
       console.error("Failed to fetch WIP batches");
     } finally {
@@ -332,42 +335,17 @@ export default function WorkInProgress() {
       </div>
 
       {/* Complete Dialog */}
-          {selectedBatch && (
-      <CompleteWipBatchDialog
-        open={isCompleteDialogOpen}
-        onOpenChange={setIsCompleteDialogOpen}
-        batch={{
-          id:          selectedBatch.id,
-          batchNumber: selectedBatch.batchNumber,
-          status:      selectedBatch.status,
-          notes:       selectedBatch.notes ?? null,
-
-          // build a fresh array of exactly the WipMaterial shape the dialog expects
-          materials: selectedBatch.materials.map((m) => ({
-            id:       m.id,
-            quantity: m.quantity,
-            product: {
-              id:   m.product.id,
-              code: m.product.code,
-              name: m.product.name || "",  // now guaranteed string
-              unit: m.product.unit,
-            },
-          })),
-
-          // and likewise for outputs, matching the OutputProduct interface
-          outputs: selectedBatch.outputs.map((o) => ({
-            product_code:      o.product.code,
-            quantity:          o.quantity,
-            expected_quantity: o.quantity,
-          })),
-        }}
-        onSuccess={() => {
-          setIsCompleteDialogOpen(false);
-          fetchWipBatches();
-        }}
-      />
-    )}
-
+      {selectedBatch && (
+        <CompleteWipBatchDialog
+          open={isCompleteDialogOpen}
+          onOpenChange={setIsCompleteDialogOpen}
+          batch={selectedBatch}
+          onSuccess={() => {
+            setIsCompleteDialogOpen(false);
+            fetchWipBatches();
+          }}
+        />
+      )}
 
       {/* Detail Modal */}
       {selectedBatch && !isCompleteDialogOpen && (

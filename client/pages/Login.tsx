@@ -134,17 +134,6 @@ export default function Login() {
               )}
             </Button>
           </form>
-
-          {/* Development hint */}
-          <div className="mt-6 p-3 bg-gray-50 rounded-lg text-center">
-            <p className="text-xs text-gray-500 mb-1">Demo Credentials:</p>
-            <p className="text-xs text-gray-600">
-              ID: <span className="font-mono">Admin123</span>
-            </p>
-            <p className="text-xs text-gray-600">
-              Password: <span className="font-mono">Sunmount1800</span>
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>

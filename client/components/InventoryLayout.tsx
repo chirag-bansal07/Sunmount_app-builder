@@ -97,9 +97,11 @@ export default function InventoryLayout({ children }: InventoryLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b">
-            <h1 className="text-xl font-bold text-gray-800">
-              Inventory Manager
-            </h1>
+            <img
+              src="/sunmountlogo.png"
+              alt="Sunmount Solution"
+              className="h-15 w-auto"
+            /> 
             <Button
               variant="ghost"
               size="sm"

@@ -236,6 +236,7 @@ const handleSubmit = async () => {
           >
             {loading ? "Completing..." : batch.status === "completed" ? "Already Completed" : "Complete Batch"}
           </Button>
+        
         </div>
       </DialogContent>
     </Dialog>

@@ -19,33 +19,6 @@ interface Product {
 export default function NewOrder() {
   const [activeTab, setActiveTab] = useState("sales");
   const [products, setProducts] = useState<Product[]>([
-    {
-      id: "1",
-      code: "PC733",
-      name: "Widget A",
-      description: "Standard widget",
-      weight: "0.5 kg",
-      price: "$10.00",
-      quantity: "100",
-    },
-    {
-      id: "2",
-      code: "PC456",
-      name: "Widget B",
-      description: "Premium widget",
-      weight: "0.7 kg",
-      price: "$15.00",
-      quantity: "50",
-    },
-    {
-      id: "3",
-      code: "PC789",
-      name: "Widget C",
-      description: "Basic widget",
-      weight: "0.3 kg",
-      price: "$5.00",
-      quantity: "200",
-    },
   ]);
 
   const [formData, setFormData] = useState({
