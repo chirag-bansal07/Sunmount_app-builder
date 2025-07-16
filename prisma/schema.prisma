@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  product_code String   @id
+  name         String
+  description  String
+  weight       Float
+  price        Float
+  quantity     Int
+  last_updated DateTime
+}
+
+model WorkInProgress {
+  id            Int       @id @default(autoincrement())
+  batch_number  String    @unique
+  raw_materials Json
+  output        Json
+  status        String
+  start_date    DateTime
+  end_date      DateTime?
+}
+
+model Order {
+  order_id String   @id
+  type     String
+  bom      String
+  party_id String
+  products Json
+  status   String
+  date     DateTime
+  notes    String?
+}
+
+model Manufacturing {
+  batch_number  String   @id
+  raw_materials Json
+  output        Json
+  status        String
+  start_date    DateTime
+  end_date      DateTime
+}
+
+model Customer {
+  id        String   @id
+  name      String
+  email     String   @unique
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
