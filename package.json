@@ -12,15 +12,15 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:client && npm run build:server",
+    "build": "cd backend && npm run db:generate && cd .. && npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "vite build --config vite.config.server.ts",
     "start": "node dist/server/node-build.mjs",
     "test": "vitest --run",
     "format.fix": "prettier --write .",
     "typecheck": "tsc",
-    "db:generate": "prisma generate",
-    "db:push": "prisma db push",
+    "db:generate": "cd backend && prisma generate",
+    "db:push": "cd backend && prisma db push",
     "db:seed": "tsx server/scripts/seed.ts",
     "db:setup": "npm run db:generate && npm run db:push && npm run db:seed"
   },
