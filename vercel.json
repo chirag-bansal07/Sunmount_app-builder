@@ -2,7 +2,7 @@
   "version": 2,
   "builds": [
     {
-      "src": "backend/src/vercel.ts",
+      "src": "backend/src/index.ts",
       "use": "@vercel/node"
     },
     {
@@ -16,7 +16,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/backend/src/vercel.ts"
+      "dest": "/backend/src/index.ts"
     },
     {
       "src": "/(.*)",
@@ -25,10 +25,5 @@
   ],
   "env": {
     "DATABASE_URL": "@database_url"
-  },
-  "functions": {
-    "backend/src/vercel.ts": {
-      "maxDuration": 30
-    }
   }
 }
