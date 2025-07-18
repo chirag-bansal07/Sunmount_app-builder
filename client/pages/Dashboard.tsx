@@ -15,7 +15,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { dashboardEvents } from "@/lib/dashboard-events";
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL =
+  import.meta.env.VITE_API_URL || "https://sunmount-app-builder.onrender.com";
 interface DashboardStats {
   totalProducts: number;
   totalInventoryValue: number;
@@ -72,14 +73,14 @@ export default function Dashboard() {
         fetch(`${API_URL}/api/wip`),
       ]);
       if (!inventoryResponse.ok) {
-    console.error("Inventory fetch failed:", inventoryResponse.statusText);
-        }
-        if (!inventoryResponse.ok) {
-  console.error("Inventory fetch failed:", inventoryResponse.statusText);
-}
-if (!wipResponse.ok) {
-  console.error("WIP fetch failed:", wipResponse.statusText);
-}
+        console.error("Inventory fetch failed:", inventoryResponse.statusText);
+      }
+      if (!inventoryResponse.ok) {
+        console.error("Inventory fetch failed:", inventoryResponse.statusText);
+      }
+      if (!wipResponse.ok) {
+        console.error("WIP fetch failed:", wipResponse.statusText);
+      }
       if (inventoryResponse.ok && wipResponse.ok) {
         const inventoryData = await inventoryResponse.json();
         const wipData = await wipResponse.json();
