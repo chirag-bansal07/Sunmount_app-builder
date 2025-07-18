@@ -41,7 +41,14 @@ export const updateInventoryQuantity = async (
   });
 };
 export const updateInventory = async (products: any[], isPurchase: boolean) => {
+  console.log(
+    `🔍 updateInventory called with ${products.length} products, isPurchase: ${isPurchase}`,
+  );
+  console.log("Products data:", JSON.stringify(products, null, 2));
+
   for (const p of products) {
+    console.log(`Processing product: ${p.product_code}`);
+
     const existing = await prisma.product.findUnique({
       where: { product_code: p.product_code },
     });
@@ -50,8 +57,15 @@ export const updateInventory = async (products: any[], isPurchase: boolean) => {
       ? (p.quantity_received ?? 0)
       : -(p.quantity ?? 0); // 👈 sales subtract
 
+    console.log(
+      `Product ${p.product_code}: existing=${!!existing}, deltaQty=${deltaQty}`,
+    );
+
     if (existing) {
       const newQuantity = Math.max(0, existing.quantity + deltaQty); // ✅ prevent negative stock
+      console.log(
+        `Updating existing product ${p.product_code}: ${existing.quantity} + ${deltaQty} = ${newQuantity}`,
+      );
 
       await prisma.product.update({
         where: { product_code: p.product_code },
@@ -60,19 +74,33 @@ export const updateInventory = async (products: any[], isPurchase: boolean) => {
           last_updated: new Date(),
         },
       });
+      console.log(
+        `✅ Product ${p.product_code} inventory updated to ${newQuantity}`,
+      );
     } else if (isPurchase) {
+      const newProductData = {
+        product_code: p.product_code,
+        name: p.name || p.product_name || "Unnamed Product",
+        description: p.description || "",
+        weight: p.weight || 1,
+        price: p.price || p.unit_price || 0,
+        quantity: p.quantity_received ?? p.quantity ?? 0,
+        last_updated: new Date(),
+      };
+      console.log(`Creating new product:`, newProductData);
+
       // ✅ Create product with complete details for purchases
       await prisma.product.create({
-        data: {
-          product_code: p.product_code,
-          name: p.name || p.product_name || "Unnamed Product",
-          description: p.description || "",
-          weight: p.weight || 1,
-          price: p.price || p.unit_price || 0,
-          quantity: p.quantity_received ?? p.quantity ?? 0,
-          last_updated: new Date(),
-        },
+        data: newProductData,
       });
+      console.log(
+        `✅ New product ${p.product_code} created with quantity ${newProductData.quantity}`,
+      );
+    } else {
+      console.log(
+        `⚠️ Product ${p.product_code} not found and not a purchase - skipping`,
+      );
     }
   }
+  console.log("🎉 updateInventory completed");
 };
