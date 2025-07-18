@@ -9,7 +9,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { dashboardEvents } from "@/lib/dashboard-events";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface Product {
   id: string;
   code: string;
@@ -95,7 +95,7 @@ const handleSubmit = async () => {
         quantity: p.quantity,
       }));
 
-    const updateResponse = await fetch(`/api/wip/${batch.batchNumber}`, {
+    const updateResponse = await fetch(`${API_URL}/api/wip/${batch.batchNumber}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

@@ -13,7 +13,7 @@ import {
   ArrowRight,
   Package,
 } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface OrderItem {
   id: string;
   productId: string;
@@ -52,7 +52,7 @@ export default function CurrentOrders() {
 
   const fetchCurrentOrders = async () => {
     try {
-      const response = await fetch("/api/currentOrders");
+      const response = await fetch(`${API_URL}/api/currentOrders`);
       if (response.ok) {
         const data = await response.json();
         // Transform backend data to match frontend interface
@@ -126,7 +126,7 @@ export default function CurrentOrders() {
 
   const dispatchOrder = async (orderId: string) => {
     try {
-      const response = await fetch("/api/quotations/update-status", {
+      const response = await fetch(`${API_URL}/api/quotations/update-status`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

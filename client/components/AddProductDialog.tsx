@@ -16,7 +16,7 @@ interface AddProductDialogProps {
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 }
-
+const API_URL = import.meta.env.VITE_API_URL;
 export function AddProductDialog({
   open,
   onOpenChange,
@@ -55,7 +55,7 @@ export function AddProductDialog({
         quantity: formData.quantity,
       };
 
-      const response = await fetch("/api/inventory", {
+      const response = await fetch(`${API_URL}/api/inventory`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -17,7 +17,7 @@ import {
   Package,
   Factory,
 } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface SidebarItem {
   title: string;
   href: string;

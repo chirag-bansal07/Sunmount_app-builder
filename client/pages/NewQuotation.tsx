@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface Product {
   id: string;
   code: string;
@@ -113,7 +113,7 @@ export default function NewQuotation() {
 
       // First create customer if it doesn't exist
       if (formData.customerName && formData.email) {
-        await fetch("/api/customers", {
+        await fetch(`${API_URL}/api/customers`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -128,7 +128,7 @@ export default function NewQuotation() {
         });
       }
 
-      const response = await fetch("/api/quotations/create", {
+      const response = await fetch(`${API_URL}/api/quotations/create`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

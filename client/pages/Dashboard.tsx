@@ -15,7 +15,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { dashboardEvents } from "@/lib/dashboard-events";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface DashboardStats {
   totalProducts: number;
   totalInventoryValue: number;
@@ -68,8 +68,8 @@ export default function Dashboard() {
   const fetchDashboardData = async () => {
     try {
       const [inventoryResponse, wipResponse] = await Promise.all([
-        fetch("http://localhost:3000/api/inventory"),
-        fetch("http://localhost:3000/api/wip"),
+        fetch(`${API_URL}/api/inventory`),
+        fetch(`${API_URL}/api/wip`),
       ]);
       if (!inventoryResponse.ok) {
     console.error("Inventory fetch failed:", inventoryResponse.statusText);

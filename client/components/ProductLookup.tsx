@@ -7,7 +7,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Search } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface Product {
   id: string;
   code: string;
@@ -52,7 +52,7 @@ export function ProductLookup({
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("/api/inventory");
+      const response = await fetch(`${API_URL}/api/inventory`);
       if (response.ok) {
         const data = await response.json();
         // Transform backend data to frontend format
@@ -81,7 +81,7 @@ export function ProductLookup({
 
     setLoading(true);
     try {
-      const response = await fetch(`/api/products/search?query=${searchCode}`);
+      const response = await fetch(`${API_URL}/api/products/search?query=${searchCode}`);
       if (response.ok) {
         const searchResults = await response.json();
         if (searchResults.length > 0) {

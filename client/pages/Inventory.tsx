@@ -15,7 +15,7 @@ import { Plus, Search, Edit, Trash2, Package } from "lucide-react";
 import { AddProductDialog } from "@/components/AddProductDialog";
 import { EditProductDialog } from "@/components/EditProductDialog";
 import { AdjustInventoryDialog } from "@/components/AdjustInventoryDialog";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface Product {
   id: string;
   code: string;
@@ -44,7 +44,7 @@ export default function Inventory() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("/api/inventory");
+      const response = await fetch(`${API_URL}/api/inventory`);
       if (response.ok) {
         const data = await response.json();
         // Transform backend data to match frontend interface
@@ -75,7 +75,7 @@ export default function Inventory() {
     if (!confirm("Are you sure you want to delete this product?")) return;
 
     try {
-      const response = await fetch(`/api/products/${productId}`, {
+      const response = await fetch(`${API_URL}/api/products/${productId}`, {
         method: "DELETE",
       });
 

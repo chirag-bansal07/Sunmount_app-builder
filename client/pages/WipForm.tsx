@@ -21,7 +21,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Trash2, Save, ArrowLeft } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface Product {
   id: string;
   code: string;
@@ -71,7 +71,7 @@ export default function WipForm() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch("/api/inventory");
+      const response = await fetch(`${API_URL}/api/inventory`);
       if (response.ok) {
         const data = await response.json();
         // Transform backend data to match frontend interface
@@ -228,7 +228,7 @@ export default function WipForm() {
         start_date: new Date(formData.startDate).toISOString(),
       };
 
-      const response = await fetch("/api/wip", {
+      const response = await fetch(`${API_URL}/api/wip`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

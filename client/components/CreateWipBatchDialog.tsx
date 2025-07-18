@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, Trash2 } from "lucide-react";
 import { ProductLookup } from "@/components/ProductLookup";
 import { dashboardEvents } from "@/lib/dashboard-events";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface Product {
   id: string;
   code: string;
@@ -132,7 +132,7 @@ export function CreateWipBatchDialog({
     setLoading(true);
 
     try {
-      const response = await fetch("/api/wip", {
+      const response = await fetch(`${API_URL}/api/wip`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

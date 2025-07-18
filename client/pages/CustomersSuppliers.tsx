@@ -14,7 +14,7 @@ import {
   Phone,
   MapPin,
 } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface Customer {
   id: string;
   name: string;
@@ -50,7 +50,7 @@ export default function CustomersSuppliers() {
 
   const fetchCustomers = async () => {
     try {
-      const response = await fetch("/api/customers");
+      const response = await fetch(`${API_URL}/api/customers`);
       if (response.ok) {
         const data = await response.json();
         setCustomers(data);
@@ -66,7 +66,7 @@ export default function CustomersSuppliers() {
 
   const fetchSuppliers = async () => {
     try {
-      const response = await fetch("/api/suppliers");
+      const response = await fetch(`${API_URL}/api/suppliers`);
       if (response.ok) {
         const data = await response.json();
         setSuppliers(data);

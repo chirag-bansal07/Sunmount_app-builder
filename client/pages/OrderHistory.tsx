@@ -21,7 +21,7 @@ import {
   X,
   Package,
 } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface OrderItem {
   id: string;
   productId: string;
@@ -66,7 +66,7 @@ export default function OrderHistory() {
 
   const fetchOrderHistory = async () => {
     try {
-      const response = await fetch("/api/orderHistory");
+      const response = await fetch(`${API_URL}/api/orderHistory`);
       if (response.ok) {
         const data = await response.json();
         // Transform backend data to match frontend interface

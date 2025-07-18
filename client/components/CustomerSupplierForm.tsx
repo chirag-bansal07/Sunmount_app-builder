@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/select";
 import { X, Save, Star } from "lucide-react";
 import type { Customer, Supplier } from "@shared/api";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface CustomerSupplierFormProps {
   type: "customer" | "supplier";
   onClose: () => void;

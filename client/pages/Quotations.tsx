@@ -21,7 +21,7 @@ import {
   ArrowRight,
   Package,
 } from "lucide-react";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface QuotationItem {
   id: string;
   productId: string;
@@ -66,7 +66,7 @@ export default function Quotations() {
 
   const fetchQuotations = async () => {
     try {
-      const response = await fetch("/api/quotations");
+      const response = await fetch(`${API_URL}/api/quotations`);
       if (response.ok) {
         const data = await response.json();
         // Transform backend data to match frontend interface
@@ -130,7 +130,7 @@ export default function Quotations() {
 
   const moveToOrders = async (quotationId: string) => {
     try {
-      const response = await fetch("/api/quotations/update-status", {
+      const response = await fetch(`${API_URL}/api/quotations/update-status`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -163,7 +163,7 @@ export default function Quotations() {
         }),
       );
 
-      const response = await fetch("/api/quotations/update-status", {
+      const response = await fetch(`${API_URL}/api/quotations/update-status`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -190,7 +190,7 @@ export default function Quotations() {
 
   const completePurchase = async (quotationId: string) => {
     try {
-      const response = await fetch("/api/quotations/update-status", {
+      const response = await fetch(`${API_URL}/api/quotations/update-status`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

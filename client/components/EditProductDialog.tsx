@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface Product {
   id: string;
   code: string;
@@ -71,7 +71,7 @@ export function EditProductDialog({
         price: formData.unitPrice,
       };
 
-      const response = await fetch(`/api/inventory/${product.code}`, {
+      const response = await fetch(`${API_URL}/api/inventory/${product.code}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
