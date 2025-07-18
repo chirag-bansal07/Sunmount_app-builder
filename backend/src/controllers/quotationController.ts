@@ -164,7 +164,12 @@ export const updateQuotationStatus = async (req: Request, res: Response) => {
         });
 
         if (allReceived) {
+          console.log(
+            "🎯 All items received - updating inventory with products:",
+            JSON.stringify(products, null, 2),
+          );
           await updateInventory(products, true);
+          console.log("✅ Inventory update completed for partial delivery");
         }
 
         return res.status(200).json({
@@ -189,7 +194,12 @@ export const updateQuotationStatus = async (req: Request, res: Response) => {
           },
         });
 
+        console.log(
+          "🎯 Force completing purchase - updating inventory with products:",
+          JSON.stringify(products, null, 2),
+        );
         await updateInventory(products, true);
+        console.log("✅ Inventory update completed for force completion");
 
         return res.status(200).json({
           message: "Purchase force-completed and inventory updated",
