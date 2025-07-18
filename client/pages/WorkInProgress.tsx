@@ -26,7 +26,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { CompleteWipBatchDialog } from "@/components/CompleteWipBatchDialog";
-
+const API_URL = import.meta.env.VITE_API_URL;
 interface Product {
   id: string;
   code: string;
@@ -78,7 +78,7 @@ export default function WorkInProgress() {
 
   async function fetchWipBatches() {
     try {
-      const res = await fetch("/api/wip");
+      const res = await fetch(`${API_URL}/api/wip`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       const transformed: WipBatch[] = data.map((b: any) => ({
